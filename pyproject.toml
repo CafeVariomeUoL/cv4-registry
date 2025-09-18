@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dedi-registry"
+authors = [
+  { name="Firefox2100", email="wangyunze16@gmail.com" },
+]
+description = "Decentralised Discovery Network Registry"
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+]
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+dependencies = [
+    "apscheduler~=3.11.0",
+    "fastapi~=0.116.1",
+    "pyaml~=25.7.0",
+    "pydantic~=2.11.7",
+    "pydantic-settings~=2.10.1",
+    "pymongo~=4.14.1",
+    "redis~=6.4.0",
+    "uvicorn~=0.35.0",
+]
+dynamic = [
+    "version"
+]
+
+[project.urls]
+Homepage = "https://github.com/Firefox2100/dedi-registry"
+Repository = "https://github.com/Firefox2100/dedi-registry.git"
+Issues = "https://github.com/Firefox2100/dedi-registry/issues"
+
+[tool.setuptools.dynamic]
+version = {attr = "dedi_registry.__version__"}
