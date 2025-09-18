@@ -1,12 +1,16 @@
+import importlib.resources as pkg_resources
 from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from dedi_registry import __version__ as dedi_registry_version
 from dedi_registry.etc.consts import LOGGER, CONFIG
 from dedi_registry.database import get_active_db
-from dedi_registry.router import network_router
+from dedi_registry.router import api_router, ui_router
 
 
 @asynccontextmanager
@@ -56,17 +60,20 @@ def create_app() -> FastAPI:
         },
         openapi_tags=[
             {
-                'name': 'Network',
-                'description': 'Endpoints for managing networks in the registry.',
+                'name': 'API',
+                'description': 'Endpoints for other DDG services to interact with the registry.',
+            },
+            {
+                'name': 'UI',
+                'description': 'Endpoints for the web user interface.',
             },
         ],
-        root_path=CONFIG.service_root_path,
         lifespan=lifespan,
     )
 
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=(),
+        allow_origins=set(CONFIG.allow_origins) or (),
         allow_credentials=True,
         allow_methods=('GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'),
         allow_headers=(
@@ -77,7 +84,11 @@ def create_app() -> FastAPI:
         ),
     )
 
-    app.include_router(network_router)
+    app.include_router(api_router)
+    app.include_router(ui_router)
+
+    static_file_path = pkg_resources.files('dedi_registry.data') / 'static'
+    app.mount('/static', StaticFiles(directory=str(static_file_path)), name='static')
 
     return app
 
@@ -153,4 +164,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

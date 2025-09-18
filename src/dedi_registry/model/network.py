@@ -142,13 +142,16 @@ class NetworkRepository(ABC):
                      status: RecordStatus | None = None,
                      cursor_id: str | None = None,
                      limit: int = 0,
-                     ) -> list[Network]:
+                     forward: bool = True,
+                     ) -> tuple[list[Network], str | None, str | None]:
         """
         Filter networks based on visibility and registration status.
         :param status: The status of the network record to filter by.
         :param cursor_id: The ID of the last network from the previous page for pagination.
         :param limit: The maximum number of records to return. 0 means no limit.
-        :return: A list of Network objects that match the filter criteria.
+        :param forward: Direction of pagination; True for forward, False for backward.
+        :return: A list of Network objects that match the filter criteria, with the cursor id
+            for the first and last records if more records are available.
         """
 
     @abstractmethod
@@ -180,7 +183,7 @@ class NetworkRepository(ABC):
                      name: str | None = None,
                      description: str | None = None,
                      url: str | None = None,
-                     ) -> list[Network]:
+                     ) -> tuple[list[Network], str | None]:
         """
         Search networks based on name, description, and URL of participating nodes.
 
@@ -190,7 +193,25 @@ class NetworkRepository(ABC):
         :param name: Optional name to search for.
         :param description: Optional description to search for.
         :param url: Optional URL to search for in nodes.
-        :return: A list of Network objects that match the search criteria.
+        :return: A list of Network objects that match the search criteria, with the next
+            cursor ID if more records are available.
+        """
+
+    @abstractmethod
+    async def count(self, status: RecordStatus | None = None) -> int:
+        """
+        Count the number of networks in the repository, optionally filtered by status.
+        :param status: The status of the network record to filter by.
+        :return: The count of networks matching the criteria.
+        """
+
+    @abstractmethod
+    async def count_nodes(self, status: RecordStatus | None = None) -> int:
+        """
+        Count the total number of nodes across all networks in the repository,
+        optionally filtered by network status.
+        :param status: The status of the network record to filter by.
+        :return: The count of nodes in networks matching the criteria.
         """
 
 

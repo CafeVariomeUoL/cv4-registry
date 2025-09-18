@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>{{ page_title or "My Site" }}</title>
+  <meta name="description" content="{{ meta_description or 'Placeholder description' }}" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="{{ url_for('static', path='css/custom.css') }}" />
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg bg-body-tertiary">
+    <div class="container">
+      <a class="navbar-brand" href="/">My Registry</a>
+    </div>
+  </nav>
+
+  <main class="container py-5">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="border-top py-4">
+    <div class="container text-muted small">
+      © {{ 2025 }} My Registry — placeholder footer
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

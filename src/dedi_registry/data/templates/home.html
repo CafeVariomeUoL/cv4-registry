@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="row g-4">
+    <div class="col-12">
+      <h1 class="h3 mb-3">Welcome to the Registry</h1>
+      <p class="text-muted">
+        Placeholder intro text. This page is fully server-rendered for SEO.
+      </p>
+    </div>
+
+    <div class="col-sm-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="display-4 fw-bold">{{ network_count }}</div>
+          <div class="text-secondary">Networks</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6">
+      <div class="card shadow-sm h-100">
+        <div class="card-body text-center">
+          <div class="display-4 fw-bold">{{ node_count }}</div>
+          <div class="text-secondary">Nodes</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <section class="mt-4">
+        <h2 class="h5">About</h2>
+        <p>More placeholder text about your project. Replace as needed.</p>
+      </section>
+    </div>
+  </div>
+{% endblock %}

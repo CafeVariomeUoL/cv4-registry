@@ -35,6 +35,20 @@ class Database(ABC):
         :return: NetworkAuditRepository instance.
         """
 
+    @abstractmethod
+    async def init(self):
+        """
+        Initialise the database by loading necessary data and constraints.
+
+        This method should be called many times without side effects.
+        """
+
+    @abstractmethod
+    async def close(self) -> None:
+        """
+        Close the database connection.
+        """
+
 
 _active_db: Database = None
 

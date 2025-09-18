@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div>
+      <h1 class="h4 mb-0">Networks</h1>
+      <p class="text-muted mb-0">
+        Listing up to 10 networks per page{% if network_status %} (status: <span class="badge text-bg-secondary">{{ network_status }}</span>){% endif %}.
+      </p>
+    </div>
+  </div>
+
+  {% if networks and networks|length > 0 %}
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th scope="col">Network ID</th>
+            <th scope="col">Name</th>
+            <th scope="col" class="w-50">Description</th>
+            <th scope="col" class="text-end">Node Count</th>
+            <th scope="col" class="text-end">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for n in networks %}
+            <tr>
+              <td class="text-monospace small">{{ n.network_id }}</td>
+              <td>{{ n.network_name }}</td>
+              <td class="text-truncate">{{ n.description }}</td>
+              <td class="text-end">{{ n.nodes | length }}</td>
+              <td class="text-end">
+                <!-- Placeholder details link; wire up later -->
+                <a class="btn btn-sm btn-outline-primary" href="/networks/{{ n.network_id }}">View</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="d-flex justify-content-between mt-3">
+      <div>
+        {% if prev_url %}
+          <a class="btn btn-outline-secondary" href="{{ prev_url }}">&laquo; Previous</a>
+        {% endif %}
+      </div>
+      <div>
+        {% if next_url %}
+          <a class="btn btn-outline-secondary" href="{{ next_url }}">Next &raquo;</a>
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      No networks found.
+    </div>
+  {% endif %}
+{% endblock %}

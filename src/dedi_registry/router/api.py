@@ -1,19 +1,23 @@
 import secrets
+import hashlib
+from uuid import UUID
+import jsonpatch
 from pydantic import Field, ConfigDict
-from fastapi import APIRouter, HTTPException, Query, Depends, status
+from fastapi import APIRouter, HTTPException, Query, Header, Depends, status
 
-from dedi_registry.etc.consts import LOGGER
-from dedi_registry.etc.enums import DatabaseConfigType
+from dedi_registry.etc.consts import LOGGER, CONFIG
+from dedi_registry.etc.enums import DatabaseConfigType, RecordAction, RecordStatus
 from dedi_registry.etc.utils import validate_hash_challenge
 from dedi_registry.cache import Cache, get_active_cache
 from dedi_registry.database import Database, get_active_db
 from dedi_registry.model.base import JsonModel
 from dedi_registry.model.network import Network, NetworkAuditRequestDetail, NetworkAudit
+from .util import get_request_detail
 
 
-network_router = APIRouter(
-    prefix='/networks',
-    tags=['Network'],
+api_router = APIRouter(
+    prefix='/api',
+    tags=['API'],
 )
 
 
@@ -37,7 +41,7 @@ class ChallengeResponse(JsonModel):
     )
 
 
-@network_router.get('/challenge', response_model=ChallengeResponse)
+@api_router.get('/challenge', response_model=ChallengeResponse)
 async def get_challenge(cache: Cache = Depends(get_active_cache),
                         db: Database = Depends(get_active_db),
                         ):
@@ -72,12 +76,17 @@ async def get_challenge(cache: Cache = Depends(get_active_cache),
     )
 
 
-@network_router.post('', response_model=Network, status_code=status.HTTP_201_CREATED)
+@api_router.post('/networks', response_model=Network, status_code=status.HTTP_201_CREATED)
 async def register_network(network: Network,
                            nonce: str = Query(..., description='The nonce received from the challenge endpoint'),
                            solution: str = Query(..., description='The challenge solution'),
+                           sender_node: str = Header(
+                               ...,
+                               alias='Node-ID', description='The ID of the node sending the request'
+                           ),
                            db: Database = Depends(get_active_db),
                            cache: Cache = Depends(get_active_cache),
+                           request_detail: NetworkAuditRequestDetail = Depends(get_request_detail),
                            ):
     """
     Register a new network in the system.
@@ -85,8 +94,10 @@ async def register_network(network: Network,
     :param network: The network details to register.
     :param nonce: The nonce received from the challenge endpoint to validate the request.
     :param solution: The challenge solution to validate the request.
+    :param sender_node: The ID of the node sending the request.
     :param db: The database instance to store the network.
     :param cache: The cache instance to retrieve the challenge for validation.
+    :param request_detail: Details about the request for auditing purposes.
     :return: The registered network details.
     """
     challenge_difficulty = await cache.challenge.get_challenge(nonce)
@@ -111,4 +122,46 @@ async def register_network(network: Network,
             detail=f'Network with ID {network.network_id} already exists.'
         )
 
+    node_found = False
+    sender_uuid = UUID(sender_node)
+    for node in network.nodes:
+        if node.node_id == sender_uuid:
+            node_found = True
+            break
+
+    if not node_found:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='Sender node is not part of the network being registered.'
+        )
+
+    if CONFIG.auto_approve:
+        network.status = RecordStatus.ACTIVE
+    else:
+        network.status = RecordStatus.PENDING
+
     await db.networks.save(network)
+
+    json_dump = network.model_dump()
+    json_patch = jsonpatch.JsonPatch.from_diff({}, json_dump)
+
+    audit_record = NetworkAudit(
+        networkId=network.network_id,
+        version=0,
+        action=RecordAction.CREATE,
+        actorNode=sender_uuid,
+        patch=json_patch,
+        hashAfter=f'sha256:{hashlib.sha256(json_dump.encode()).hexdigest()}',
+        requestDetail=request_detail
+    )
+
+    await db.audits.save(audit_record)
+
+    LOGGER.info(
+        'Registered new network with ID %s by node %s',
+        network.network_id,
+        sender_node
+    )
+    LOGGER.debug('Network details: %s', network.model_dump_json())
+
+    return network

@@ -1,3 +1,4 @@
+import os
 import logging
 from typing import Literal
 from pydantic import Field
@@ -18,6 +19,14 @@ class Settings(BaseSettings):
     auto_approve: bool = Field(
         False,
         description='Automatically approve network registration requests for unattended deployments',
+    )
+    allow_origins: list[str] = Field(
+        default_factory=list,
+        description='List of allowed origins for CORS requests',
+    )
+    trusted_proxies: list[str] = Field(
+        default_factory=list,
+        description='List of trusted proxy IP addresses for correct client IP resolution',
     )
 
     database_driver: DatabaseDriverType = Field(
