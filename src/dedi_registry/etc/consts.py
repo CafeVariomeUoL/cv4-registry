@@ -1,10 +1,11 @@
 import os
 import logging
+import secrets
 from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from dedi_registry.etc.enums import DatabaseDriverType
+from dedi_registry.etc.enums import DatabaseDriverType, CacheDriverType
 
 
 class Settings(BaseSettings):
@@ -42,13 +43,30 @@ class Settings(BaseSettings):
         description='Port for the MongoDB database',
     )
     mongodb_db_name: str = Field(
-        'cafe-variome',
+        'ddn-registry',
         description='Name of the MongoDB database to use',
+    )
+
+    cache_driver: CacheDriverType = Field(
+        CacheDriverType.REDIS,
+        description='Cache driver to use for the service',
+    )
+    redis_host: str = Field(
+        'localhost',
+        description='Redis host for the cache',
+    )
+    redis_port: int = Field(
+        6379,
+        description='Redis port for the cache',
     )
 
     logging_level: Literal['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG', 'NOTSET'] = Field(
         'INFO',
         description='Logging level for the application'
+    )
+    secret_key: str = Field(
+        default_factory=secrets.token_urlsafe,
+        description='Secret key for the application',
     )
 
 

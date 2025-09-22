@@ -236,7 +236,7 @@ class MongoNetworkAuditRepository(NetworkAuditRepository):
 
         return None
 
-    async def get_network_audits(self, network_id: str) -> list[NetworkAudit]:
+    async def get_network_audits(self, network_id: UUID) -> list[NetworkAudit]:
         """
         Retrieve all audit records for a specific network, sorted by version in ascending order.
         :param network_id: The ID of the network.

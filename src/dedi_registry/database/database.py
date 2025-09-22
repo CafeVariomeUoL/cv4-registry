@@ -70,6 +70,7 @@ def get_active_db() -> Database:
         mongo_client = AsyncMongoClient(
             host=CONFIG.mongodb_host,
             port=CONFIG.mongodb_port,
+            uuidRepresentation='standard',
         )
         MongoDatabase.set_client(
             client=mongo_client,

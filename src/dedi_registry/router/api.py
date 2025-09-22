@@ -41,10 +41,10 @@ class ChallengeResponse(JsonModel):
     )
 
 
-@api_router.get('/challenge', response_model=ChallengeResponse)
-async def get_challenge(cache: Cache = Depends(get_active_cache),
-                        db: Database = Depends(get_active_db),
-                        ):
+@api_router.get('/v1/challenge', response_model=ChallengeResponse)
+async def get_challenge_v1(cache: Cache = Depends(get_active_cache),
+                           db: Database = Depends(get_active_db),
+                           ):
     """
     Generate a Proof of Work challenge for request validation.
 
@@ -76,18 +76,18 @@ async def get_challenge(cache: Cache = Depends(get_active_cache),
     )
 
 
-@api_router.post('/networks', response_model=Network, status_code=status.HTTP_201_CREATED)
-async def register_network(network: Network,
-                           nonce: str = Query(..., description='The nonce received from the challenge endpoint'),
-                           solution: str = Query(..., description='The challenge solution'),
-                           sender_node: str = Header(
-                               ...,
-                               alias='Node-ID', description='The ID of the node sending the request'
-                           ),
-                           db: Database = Depends(get_active_db),
-                           cache: Cache = Depends(get_active_cache),
-                           request_detail: NetworkAuditRequestDetail = Depends(get_request_detail),
-                           ):
+@api_router.post('/v1/networks', response_model=Network, status_code=status.HTTP_201_CREATED)
+async def register_network_v1(network: Network,
+                              nonce: str = Query(..., description='The nonce received from the challenge endpoint'),
+                              solution: str = Query(..., description='The challenge solution'),
+                              sender_node: str = Header(
+                                  ...,
+                                  alias='Node-ID', description='The ID of the node sending the request'
+                              ),
+                              db: Database = Depends(get_active_db),
+                              cache: Cache = Depends(get_active_cache),
+                              request_detail: NetworkAuditRequestDetail = Depends(get_request_detail),
+                              ):
     """
     Register a new network in the system.
     \f

@@ -2,19 +2,41 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>{{ page_title or "My Site" }}</title>
-  <meta name="description" content="{{ meta_description or 'Placeholder description' }}" />
+  <title>{{ page_title or "Decentralised Discovery Networks Registry" }}</title>
+  <meta name="description" content="{{ meta_description or 'A page in Decentralised Discovery Networks Registry' }}" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link
-    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
-    rel="stylesheet"
-  />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/custom.css') }}" />
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <nav class="navbar navbar-expand-lg navbar-light bg-body-tertiary">
     <div class="container">
-      <a class="navbar-brand" href="/">My Registry</a>
+      <a class="navbar-brand" href="/">Decentralised Discovery Networks Registry</a>
+
+      <!-- Mobile toggler -->
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+              aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div id="mainNav" class="collapse navbar-collapse">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          {% block nav_links %}
+            {% if nav_links %}
+              {% for link in nav_links %}
+                <li class="nav-item">
+                  {% if link.active %}
+                    <a class="nav-link active disabled" aria-current="page" aria-disabled="true"
+                       href="{{ link.url }}">{{ link.label }}</a>
+                  {% else %}
+                    <a class="nav-link" href="{{ link.url }}">{{ link.label }}</a>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            {% endif %}
+          {% endblock %}
+        </ul>
+      </div>
     </div>
   </nav>
 
@@ -24,7 +46,7 @@
 
   <footer class="border-top py-4">
     <div class="container text-muted small">
-      © {{ 2025 }} My Registry — placeholder footer
+      © {{ 2025 }} Decentralised Discovery Networks Registry — by Firefox2100
     </div>
   </footer>
 

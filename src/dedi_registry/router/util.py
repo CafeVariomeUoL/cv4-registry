@@ -4,6 +4,7 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
 from dedi_registry.etc.consts import CONFIG
+from dedi_registry.database import Database
 from dedi_registry.model.network import NetworkAuditRequestDetail
 
 
@@ -79,6 +80,52 @@ async def get_request_detail(request: Request) -> NetworkAuditRequestDetail:
         ipAddress=ip_address,
         userAgent=user_agent
     )
+
+
+async def build_nav_links(request: Request, db: Database) -> list[dict]:
+    """
+    Build the navigation links in the nav bar for the UI.
+    :return: A list of navigation link dictionaries.
+    """
+    path = request.url.path
+    username = request.session.get('username')
+
+    if username:
+        user = await db.users.get(username)
+
+        if not user:
+            username = None
+            request.session['username'] = None
+
+    nav_links = [
+        {
+            'label': 'Home',
+            'url': request.url_for('get_home_page'),
+            'active': path == '/',
+        },
+        {
+            'label': 'Networks',
+            'url': request.url_for('display_networks'),
+            'active': path.startswith('/networks'),
+        }
+    ]
+
+    if username:
+        nav_links.append({
+            'label': 'Admin',
+            'url': request.url_for('get_admin_dashboard'),
+            'active': path.startswith('/admin')
+        })
+        nav_links.append({
+            'label': f'{username} (logout)',
+            'url': request.url_for('admin_logout'),
+            'active': False
+        })
+    else:
+        nav_links.append({
+            'label': 'Admin',
+            'url': request.url_for('get_admin_login_page'),
+        })
 
 
 def get_templates() -> Jinja2Templates:

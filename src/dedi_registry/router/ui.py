@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException, Query, Header, Depends, Request
+from uuid import UUID
+from fastapi import APIRouter, Query, Depends, Request
 from fastapi.responses import HTMLResponse
 
 from dedi_registry.etc.enums import RecordStatus
 from dedi_registry.database import Database, get_active_db
-from .util import TEMPLATES
+from .util import TEMPLATES, build_nav_links
 
 
 ui_router = APIRouter(
@@ -18,6 +19,8 @@ async def get_home_page(request: Request,
     """
     Serve the home page of the Decentralised Discovery Network Registry.
     \f
+    :param request: Request object.
+    :param db: Database instance.
     :return: An HTML response with the home page content.
     """
     network_count = await db.networks.count(RecordStatus.ACTIVE)
@@ -27,9 +30,10 @@ async def get_home_page(request: Request,
         'home.html',
         {
             'request': request,
-            'page_title': 'Home | My Registry',
+            'page_title': 'Home | Decentralised Discovery Network Registry',
             'network_count': network_count,
             'node_count': node_count,
+            'nav_links': await build_nav_links(request, db),
         }
     )
 
@@ -59,6 +63,7 @@ async def display_networks(request: Request,
     """
     Display a list of networks with optional filtering and pagination.
     \f
+    :param request: Request object.
     :param network_status: Optional status to filter networks by.
     :param cursor_id: Optional ID of the last network from the previous page for pagination.
     :param limit: Maximum number of records to return. 0 for no limit.
@@ -97,9 +102,98 @@ async def display_networks(request: Request,
         'networks.html',
         {
             'request': request,
+            'page_title': 'Networks | Decentralised Discovery Network Registry',
             'networks': networks,
             'network_status': network_status.value if network_status else None,
             'prev_url': prev_url,
             'next_url': next_url,
+            'nav_links': await build_nav_links(request, db),
+        }
+    )
+
+
+@ui_router.get('/networks/{network_id}', response_class=HTMLResponse)
+async def display_network_detail(request: Request,
+                                 network_id: str,
+                                 db: Database = Depends(get_active_db),
+                                 ):
+    """
+    Display detailed information about a specific network.
+    \f
+    :param request: Request object.
+    :param network_id: The ID of the network to display.
+    :param db: Database instance.
+    :return: An HTML response with the network details.
+    """
+    try:
+        network_uuid = UUID(network_id, version=4)
+    except ValueError:
+        return TEMPLATES.TemplateResponse(
+            '404.html',
+            {
+                'request': request,
+                'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                'detail': f'Invalid network ID format: {network_id}',
+                'return_url': request.url_for('display_networks'),
+                'return_label': 'Back to Networks',
+                'nav_links': await build_nav_links(request, db),
+            }
+        )
+    network = await db.networks.get(network_uuid)
+
+    if not network:
+        return TEMPLATES.TemplateResponse(
+            '404.html',
+            {
+                'request': request,
+                'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                'detail': f'Network with ID {network_id} not found.',
+                'return_url': request.url_for('display_networks'),
+                'return_label': 'Back to Networks',
+                'nav_links': await build_nav_links(request, db),
+            }
+        )
+
+    network_audits = await db.audits.get_network_audits(network_uuid)
+
+    audit_view = []
+    for audit in network_audits or []:
+        audit_view.append({
+            'version': audit.version,
+            'action': audit.action.value,
+            'actor': str(audit.actor),
+            'timestamp': audit.timestamp.isoformat(),
+            'hash_before': audit.hash_before,
+            'hash_after': audit.hash_after,
+            'request_detail': {
+                'ip_address': audit.request_detail.ip_address,
+                'user_agent': audit.request_detail.user_agent,
+            },
+            'patch': audit.patch or [],
+        })
+
+    return TEMPLATES.TemplateResponse(
+        'network_detail.html',
+        {
+            'request': request,
+            'page_title': f'Network {network.network_name} | Decentralised Discovery Network Registry',
+            'network': {
+                'network_id': str(network.network_id),
+                'network_name': network.network_name,
+                'description': network.description,
+                'status': network.status.value,
+                'public_key': network.public_key,
+                'nodes': [
+                    {
+                        'url': node.url,
+                        'name': node.node_name,
+                        'description': node.description,
+                        'public_key': node.public_key,
+                    } for node in network.nodes or []
+                ]
+            },
+            'network_status': network.status.value,
+            'audits': audit_view,
+            'nav_links': await build_nav_links(request, db),
         }
     )

@@ -1,16 +1,16 @@
 import importlib.resources as pkg_resources
 from contextlib import asynccontextmanager
 import uvicorn
-from fastapi import FastAPI, Request, Depends
+from starlette.middleware.sessions import SessionMiddleware
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from dedi_registry import __version__ as dedi_registry_version
 from dedi_registry.etc.consts import LOGGER, CONFIG
 from dedi_registry.database import get_active_db
-from dedi_registry.router import api_router, ui_router
+from dedi_registry.router import admin_router, api_router, ui_router
 
 
 @asynccontextmanager
@@ -60,6 +60,10 @@ def create_app() -> FastAPI:
         },
         openapi_tags=[
             {
+                'name': 'Admin',
+                'description': 'Endpoints for administrators to manage the registry.'
+            },
+            {
                 'name': 'API',
                 'description': 'Endpoints for other DDG services to interact with the registry.',
             },
@@ -69,6 +73,11 @@ def create_app() -> FastAPI:
             },
         ],
         lifespan=lifespan,
+    )
+
+    app.add_middleware(
+        ProxyHeadersMiddleware,
+        trusted_hosts=CONFIG.trusted_proxies or '127.0.0.1'
     )
 
     app.add_middleware(
@@ -84,6 +93,14 @@ def create_app() -> FastAPI:
         ),
     )
 
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=CONFIG.secret_key,
+        same_site='lax',
+        https_only=False,
+    )
+
+    app.include_router(admin_router)
     app.include_router(api_router)
     app.include_router(ui_router)
 

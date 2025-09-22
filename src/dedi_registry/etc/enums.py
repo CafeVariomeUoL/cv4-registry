@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 
 class CacheDriverType(Enum):
@@ -9,7 +9,7 @@ class CacheDriverType(Enum):
     REDIS = 'redis'
 
 
-class DatabaseConfigType(Enum):
+class DatabaseConfigType(StrEnum):
     """
     Types of configurations that can be stored in the database.
     """
