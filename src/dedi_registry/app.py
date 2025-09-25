@@ -5,12 +5,14 @@ from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.exceptions import HTTPException
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from dedi_registry import __version__ as dedi_registry_version
 from dedi_registry.etc.consts import LOGGER, CONFIG
 from dedi_registry.database import get_active_db
 from dedi_registry.router import admin_router, api_router, ui_router
+from dedi_registry.router.util import TEMPLATES, build_nav_links
 
 
 @asynccontextmanager
@@ -106,6 +108,37 @@ def create_app() -> FastAPI:
 
     static_file_path = pkg_resources.files('dedi_registry.data') / 'static'
     app.mount('/static', StaticFiles(directory=str(static_file_path)), name='static')
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request, exc):
+        if request.url.path.startswith('/api'):
+            # Do not use HTML responses for API endpoints
+            return await FastAPI.exception_handler(app, request, exc)
+
+        # For UI endpoints, build navigation links and render an error page
+        db = get_active_db()
+        nav_links = await build_nav_links(request, db)
+        context = {
+            'request': request,
+            'page_title': f'{exc.status_code} Error | Decentralised Discovery Network Registry',
+            'detail': getattr(exc, 'detail', None),
+            'nav_links': nav_links,
+            'return_url': '/',
+            'return_label': 'Back to Home',
+        }
+
+        if exc.status_code == 404:
+            return TEMPLATES.TemplateResponse(
+                '404.html',
+                context=context,
+                status_code=404
+            )
+
+        return TEMPLATES.TemplateResponse(
+            '500.html',
+            context=context,
+            status_code=exc.status_code
+        )
 
     return app
 

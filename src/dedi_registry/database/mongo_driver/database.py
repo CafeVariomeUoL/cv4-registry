@@ -4,6 +4,7 @@ from dedi_registry.etc.consts import CONFIG
 from ..database import Database
 from .config import MongoConfigRepository
 from .network import MongoNetworkRepository, MongoNetworkAuditRepository
+from .user import MongoUserRepository
 
 
 class MongoDatabase(Database):
@@ -55,6 +56,14 @@ class MongoDatabase(Database):
         :return: NetworkAuditRepository instance.
         """
         return MongoNetworkAuditRepository(self.db)
+
+    @property
+    def users(self) -> MongoUserRepository:
+        """
+        Get the user repository for managing admin users in the database.
+        :return: MongoUserRepository instance.
+        """
+        return MongoUserRepository(self.db)
 
     @classmethod
     def set_client(cls,

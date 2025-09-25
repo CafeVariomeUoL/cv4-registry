@@ -127,6 +127,8 @@ async def build_nav_links(request: Request, db: Database) -> list[dict]:
             'url': request.url_for('get_admin_login_page'),
         })
 
+    return nav_links
+
 
 def get_templates() -> Jinja2Templates:
     """

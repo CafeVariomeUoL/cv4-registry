@@ -25,6 +25,7 @@ async def get_home_page(request: Request,
     """
     network_count = await db.networks.count(RecordStatus.ACTIVE)
     node_count = await db.networks.count_nodes(RecordStatus.ACTIVE)
+    nav_links = await build_nav_links(request, db)
 
     return TEMPLATES.TemplateResponse(
         'home.html',
@@ -33,7 +34,7 @@ async def get_home_page(request: Request,
             'page_title': 'Home | Decentralised Discovery Network Registry',
             'network_count': network_count,
             'node_count': node_count,
-            'nav_links': await build_nav_links(request, db),
+            'nav_links': nav_links,
         }
     )
 
@@ -137,7 +138,8 @@ async def display_network_detail(request: Request,
                 'return_url': request.url_for('display_networks'),
                 'return_label': 'Back to Networks',
                 'nav_links': await build_nav_links(request, db),
-            }
+            },
+            status_code=404,
         )
     network = await db.networks.get(network_uuid)
 
@@ -151,7 +153,8 @@ async def display_network_detail(request: Request,
                 'return_url': request.url_for('display_networks'),
                 'return_label': 'Back to Networks',
                 'nav_links': await build_nav_links(request, db),
-            }
+            },
+            status_code=404,
         )
 
     network_audits = await db.audits.get_network_audits(network_uuid)
@@ -161,7 +164,7 @@ async def display_network_detail(request: Request,
         audit_view.append({
             'version': audit.version,
             'action': audit.action.value,
-            'actor': str(audit.actor),
+            'actor': str(audit.actor_node),
             'timestamp': audit.timestamp.isoformat(),
             'hash_before': audit.hash_before,
             'hash_after': audit.hash_after,

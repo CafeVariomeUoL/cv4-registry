@@ -25,6 +25,11 @@ async def get_admin_login_page(request: Request,
     :param db: The database instance to retrieve user information.
     :return: An HTML response with the admin login page content.
     """
+    if request.session.get('username', None):
+        # If already logged in, redirect to the dashboard or next_url
+        redirect_url = next_url or request.url_for('get_admin_dashboard')
+        return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
+
     return TEMPLATES.TemplateResponse(
         'admin_login.html',
         {

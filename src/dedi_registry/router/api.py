@@ -76,6 +76,46 @@ async def get_challenge_v1(cache: Cache = Depends(get_active_cache),
     )
 
 
+@api_router.get('/v1/networks', response_model=list[Network])
+async def list_networks_v1(db: Database = Depends(get_active_db),
+                           network_status: RecordStatus | None = Query(
+                               None,
+                               description='Filter networks by their status',
+                               alias='status',
+                           ),
+                           cursor_id: str | None = Query(
+                               None,
+                               description='The ID of the last network from the previous page for pagination'
+                           ),
+                           limit: int = Query(
+                               10,
+                               ge=0,
+                               le=100,
+                               description='The maximum number of records to return. 0 for no limit.'
+                           ),
+                           forward: bool = Query(
+                               True,
+                               description='Direction of pagination. True for forward, False for backward.'
+                           )):
+    """
+    List all registered networks in the system, optionally filtered by status.
+    :param db: The database instance to retrieve networks from.
+    :param network_status: Optional status to filter networks by.
+    :param cursor_id: Optional ID of the last network from the previous page for pagination.
+    :param limit: Maximum number of records to return. 0 for no limit.
+    :param forward: Direction of pagination. True for forward, False for backward.
+    :return: A list of networks matching the filter criteria.
+    """
+    networks = await db.networks.filter(
+        status=network_status,
+        cursor_id=cursor_id,
+        limit=limit,
+        forward=forward,
+    )
+
+    return networks
+
+
 @api_router.post('/v1/networks', response_model=Network, status_code=status.HTTP_201_CREATED)
 async def register_network_v1(network: Network,
                               nonce: str = Query(..., description='The nonce received from the challenge endpoint'),
@@ -143,6 +183,7 @@ async def register_network_v1(network: Network,
     await db.networks.save(network)
 
     json_dump = network.model_dump()
+    json_str = network.model_dump_json()
     json_patch = jsonpatch.JsonPatch.from_diff({}, json_dump)
 
     audit_record = NetworkAudit(
@@ -151,7 +192,7 @@ async def register_network_v1(network: Network,
         action=RecordAction.CREATE,
         actorNode=sender_uuid,
         patch=json_patch,
-        hashAfter=f'sha256:{hashlib.sha256(json_dump.encode()).hexdigest()}',
+        hashAfter=f'sha256:{hashlib.sha256(json_str.encode()).hexdigest()}',
         requestDetail=request_detail
     )
 

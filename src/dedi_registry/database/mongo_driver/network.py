@@ -7,6 +7,34 @@ from dedi_registry.etc.enums import RecordStatus
 from dedi_registry.model.network import Network, NetworkAuditRequestDetail, NetworkAudit, NetworkRepository, NetworkAuditRepository
 
 
+def reformat_pem(pem: str) -> str:
+    """
+    Reformat a PEM string to ensure proper line breaks.
+    :param pem: The PEM string to reformat.
+    :return: A reformatted PEM string. Line break every 64 characters within the body.
+    """
+    pem = pem.strip()
+
+    # Remove existing line breaks
+    pem = pem.replace('\n', '').replace('\r', '')
+
+    # Split the PEM into header, body, and footer
+    header = '-----BEGIN PUBLIC KEY-----'
+    footer = '-----END PUBLIC KEY-----'
+    if not (pem.startswith(header) and pem.endswith(footer)):
+        raise ValueError('Invalid PEM format')
+
+    body = pem[len(header):-len(footer)].strip()
+
+    # Insert line breaks every 64 characters in the body
+    body_lines = [body[i:i+64] for i in range(0, len(body), 64)]
+    reformatted_body = '\n'.join(body_lines)
+
+    # Reconstruct the PEM with proper formatting
+    reformatted_pem = f'{header}\n{reformatted_body}\n{footer}'
+    return reformatted_pem
+
+
 class MongoNetworkRepository(NetworkRepository):
     """
     MongoDB implementation of the NetworkRepository interface.
@@ -14,7 +42,7 @@ class MongoNetworkRepository(NetworkRepository):
 
     def __init__(self, db: AsyncDatabase):
         """
-        Initialise the MongoUserRepository with a MongoDB database instance.
+        Initialise the MongoNetworkRepository with a MongoDB database instance.
         :param db: MongoDB database instance.
         """
         self.db = db
@@ -56,7 +84,7 @@ class MongoNetworkRepository(NetworkRepository):
         :param network_id: The ID of the network to retrieve.
         :return: Network object or None if not found.
         """
-        network_data = await self.collection.find_one({'networkId': network_id}, {'_id': 0})
+        network_data = await self.collection.find_one({'networkId': str(network_id)}, {'_id': 0})
 
         if network_data:
             return Network.model_validate(network_data)
@@ -105,6 +133,11 @@ class MongoNetworkRepository(NetworkRepository):
         :param network: Network object to save.
         :return: None
         """
+        network.public_key = reformat_pem(network.public_key)
+
+        for node in network.nodes:
+            node.public_key = reformat_pem(node.public_key)
+
         await self.collection.update_one(
             {'networkId': network.network_id},
             {'$set': network.model_dump()},
@@ -243,7 +276,7 @@ class MongoNetworkAuditRepository(NetworkAuditRepository):
         :return: A list of NetworkAudit objects.
         """
         cursor = self.collection.find(
-            {'networkId': network_id},
+            {'networkId': str(network_id)},
             {'_id': 0}
         ).sort('version', 1)
 

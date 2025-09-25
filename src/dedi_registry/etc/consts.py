@@ -2,6 +2,7 @@ import os
 import logging
 import secrets
 from typing import Literal
+from argon2 import PasswordHasher
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -88,3 +89,5 @@ if not LOGGER.hasHandlers():
 
 
 LOGGER.debug('System configuration loaded: %s', CONFIG.model_dump_json())
+
+PH = PasswordHasher()

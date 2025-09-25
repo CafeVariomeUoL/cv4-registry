@@ -4,6 +4,7 @@ from dedi_registry.etc.consts import CONFIG
 from dedi_registry.etc.enums import DatabaseDriverType
 from dedi_registry.model.config import ConfigRepository
 from dedi_registry.model.network import NetworkRepository, NetworkAuditRepository
+from dedi_registry.model.user import UserRepository
 
 
 class Database(ABC):
@@ -33,6 +34,14 @@ class Database(ABC):
         """
         Get the network audit repository for managing network audits in the database.
         :return: NetworkAuditRepository instance.
+        """
+
+    @property
+    @abstractmethod
+    def users(self) -> UserRepository:
+        """
+        Get the user repository for managing admin users in the database.
+        :return: UserRepository instance.
         """
 
     @abstractmethod
