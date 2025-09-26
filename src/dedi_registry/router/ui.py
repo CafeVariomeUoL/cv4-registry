@@ -43,7 +43,8 @@ async def get_home_page(request: Request,
 async def display_networks(request: Request,
                            network_status: RecordStatus = Query(
                                None,
-                               description='Filter networks by their status'
+                               description='Filter networks by their status',
+                               alias='status',
                            ),
                            cursor_id: str | None = Query(
                                None,
