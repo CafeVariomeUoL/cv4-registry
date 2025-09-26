@@ -161,10 +161,19 @@ async def display_network_detail(request: Request,
 
     audit_view = []
     for audit in network_audits or []:
+        if audit.actor_node != 'Administrator':
+            actor_node = next(
+                (node for node in network.nodes or [] if str(node.node_id) == audit.actor_node),
+                None
+            )
+            actor_name = actor_node.node_name if actor_node else audit.actor_node
+        else:
+            actor_name = audit.actor_node
+
         audit_view.append({
             'version': audit.version,
             'action': audit.action.value,
-            'actor': str(audit.actor_node),
+            'actor': actor_name,
             'timestamp': audit.timestamp.isoformat(),
             'hash_before': audit.hash_before,
             'hash_after': audit.hash_after,
@@ -173,6 +182,33 @@ async def display_network_detail(request: Request,
                 'user_agent': audit.request_detail.user_agent,
             },
             'patch': audit.patch or [],
+        })
+
+    actions = []
+    if request.session.get('username', None):
+        if network.status == RecordStatus.PENDING:
+            actions.append({
+                'label': 'Accept',
+                'color': 'success',
+                'post_url': request.url_for('approve_network_registration', network_id=network_id),
+            })
+            actions.append({
+                'label': 'Reject',
+                'color': 'warning',
+                'post_url': request.url_for('reject_network_registration', network_id=network_id),
+            })
+
+        if network.status == RecordStatus.ACTIVE:
+            actions.append({
+                'label': 'Deactivate',
+                'color': 'warning',
+                'post_url': request.url_for('reject_network_registration', network_id=network_id),
+            })
+
+        actions.append({
+            'label': 'Ban',
+            'color': 'danger',
+            'post_url': request.url_for('blacklist_network', network_id=network_id),
         })
 
     return TEMPLATES.TemplateResponse(
@@ -198,5 +234,6 @@ async def display_network_detail(request: Request,
             'network_status': network.status.value,
             'audits': audit_view,
             'nav_links': await build_nav_links(request, db),
+            'actions': actions,
         }
     )

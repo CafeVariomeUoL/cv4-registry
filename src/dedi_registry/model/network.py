@@ -94,7 +94,7 @@ class NetworkAudit(JsonModel):
         ...,
         description='The action performed on the network record'
     )
-    actor_node: UUID = Field(
+    actor_node: str = Field(
         ...,
         alias='actorNode',
         description='The ID of the node that performed the action'
@@ -176,6 +176,15 @@ class NetworkRepository(ABC):
         Update an existing network in the repository.
         :param network: Network object to update.
         :return: None
+        """
+
+    @abstractmethod
+    async def update_status(self, network_id: UUID, new_status: RecordStatus) -> None:
+        """
+        Update the status of an existing network in the repository. This method only updates
+        the status field of the network record to prevent data race conditions.
+        :param network_id: The ID of the network to update.
+        :param new_status: The new status to set for the network.
         """
 
     @abstractmethod

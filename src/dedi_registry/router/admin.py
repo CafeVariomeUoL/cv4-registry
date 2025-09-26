@@ -1,15 +1,59 @@
+import hashlib
+from uuid import UUID
 from urllib.parse import urlparse, urlencode
+from jsonpatch import JsonPatch
 from fastapi import APIRouter, Query, Depends, Request, Form, status
 from fastapi.responses import HTMLResponse, RedirectResponse
 
+from dedi_registry.etc.enums import RecordStatus, RecordAction
 from dedi_registry.database import Database, get_active_db
-from .util import TEMPLATES, build_nav_links
+from dedi_registry.model.network import NetworkAudit, NetworkAuditRequestDetail
+from .util import TEMPLATES, build_nav_links, get_request_detail
 
 
 admin_router = APIRouter(
     prefix='/admin',
     tags=['UI', 'Admin'],
 )
+
+
+async def change_network_status(db: Database,
+                                network_uuid: UUID,
+                                request_detail: NetworkAuditRequestDetail,
+                                new_status: RecordStatus,
+                                ):
+    """
+    Change the status of a network (approve, reject, blacklist).
+    :param db: The database instance to perform the operation.
+    :param network_uuid: The UUID of the network to change status.
+    :param request_detail: Details about the request for auditing purposes.
+    """
+    network = await db.networks.get(network_uuid)
+
+    audits = await db.audits.get_network_audits(network_id=network_uuid)
+    last_version = max((audit.version for audit in audits), default=0)
+    old_json = network.model_dump()
+    old_json_str = network.model_dump_json()
+    network.status = new_status
+    new_json = network.model_dump()
+    new_json_str = network.model_dump_json()
+    json_patch = JsonPatch.from_diff(old_json, new_json)
+
+    await db.networks.update_status(
+        network_id=network_uuid,
+        new_status=new_status,
+    )
+
+    await db.audits.save(NetworkAudit(
+        networkId=network_uuid,
+        version=last_version + 1,
+        action=RecordAction.APPROVE,
+        actorNode='Administrator',
+        patch=json_patch,
+        hashBefore=f'sha256:{hashlib.sha256(old_json_str.encode()).hexdigest()}',
+        hashAfter=f'sha256:{hashlib.sha256(new_json_str.encode()).hexdigest()}',
+        requestDetail=request_detail
+    ))
 
 
 @admin_router.get('/login', response_class=HTMLResponse)
@@ -48,7 +92,7 @@ async def post_admin_login(request: Request,
                            db: Database = Depends(get_active_db),
                            username: str = Form(...),
                            password: str = Form(...),
-                           next_url: str | None = Form(None),
+                           next_url: str | None = Form(None, alias='next'),
                            ):
     """
     Handle admin login form submission.
@@ -118,3 +162,139 @@ async def get_admin_dashboard():
     \f
     :return: An HTML response with the admin dashboard content.
     """
+
+
+@admin_router.post('/networks/{network_id}/approve')
+async def approve_network_registration(request: Request,
+                                       network_id: str,
+                                       db: Database = Depends(get_active_db),
+                                       request_detail: NetworkAuditRequestDetail = Depends(get_request_detail),
+                                       ):
+    """
+    Approve a network registration request.
+    """
+    if not request.session.get('username', None):
+        return RedirectResponse(
+            request.url_for('get_admin_login_page', next=request.url.path),
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    network_uuid = UUID(network_id)
+    network = await db.networks.get(network_uuid)
+
+    if not network:
+        return TEMPLATES.TemplateResponse(
+            '404.html',
+            {
+                'request': request,
+                'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                'detail': f'Network with ID {network_id} not found.',
+                'return_url': request.url_for('display_networks'),
+                'return_label': 'Back to Networks',
+                'nav_links': await build_nav_links(request, db),
+            },
+            status_code=404,
+        )
+
+    if network.status == RecordStatus.ACTIVE:
+        return RedirectResponse(
+            request.url_for('display_network_detail', network_id=network_id),
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    await change_network_status(db, network_uuid, request_detail, RecordStatus.ACTIVE)
+
+    return RedirectResponse(
+        request.url_for('display_network_detail', network_id=network_id),
+        status_code=status.HTTP_303_SEE_OTHER
+    )
+
+
+@admin_router.post('/networks/{network_id}/reject')
+async def reject_network_registration(request: Request,
+                                      network_id: str,
+                                      db: Database = Depends(get_active_db),
+                                      request_detail: NetworkAuditRequestDetail = Depends(get_request_detail),
+                                      ):
+        """
+        Reject a network registration request.
+        """
+        if not request.session.get('username', None):
+            return RedirectResponse(
+                request.url_for('get_admin_login_page', next=request.url.path),
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+
+        network_uuid = UUID(network_id)
+        network = await db.networks.get(network_uuid)
+
+        if not network:
+            return TEMPLATES.TemplateResponse(
+                '404.html',
+                {
+                    'request': request,
+                    'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                    'detail': f'Network with ID {network_id} not found.',
+                    'return_url': request.url_for('display_networks'),
+                    'return_label': 'Back to Networks',
+                    'nav_links': await build_nav_links(request, db),
+                },
+                status_code=404,
+            )
+
+        if network.status == RecordStatus.REJECTED:
+            return RedirectResponse(
+                request.url_for('display_network_detail', network_id=network_id),
+                status_code=status.HTTP_303_SEE_OTHER
+            )
+
+        await change_network_status(db, network_uuid, request_detail, RecordStatus.REJECTED)
+
+        return RedirectResponse(
+            request.url_for('display_network_detail', network_id=network_id),
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+
+@admin_router.post('/networks/{network_id}/blacklist')
+async def blacklist_network(request: Request,
+                            network_id: str,
+                            db: Database = Depends(get_active_db),
+                            request_detail: NetworkAuditRequestDetail = Depends(get_request_detail),
+                            ):
+    """
+    Blacklist a network.
+    """
+    if not request.session.get('username', None):
+        return RedirectResponse(
+            request.url_for('get_admin_login_page', next=request.url.path),
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+
+    network_uuid = UUID(network_id)
+    network = await db.networks.get(network_uuid)
+
+    if not network:
+        return TEMPLATES.TemplateResponse(
+            '404.html',
+            {
+                'request': request,
+                'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                'detail': f'Network with ID {network_id} not found.',
+                'return_url': request.url_for('display_networks'),
+                'return_label': 'Back to Networks',
+                'nav_links': await build_nav_links(request, db),
+            },
+            status_code=404,
+        )
+
+    if network.status == RecordStatus.BLACKLISTED:
+        return RedirectResponse(
+            request.url_for('display_network_detail', network_id=network_id),
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    await change_network_status(db, network_uuid, request_detail, RecordStatus.BLACKLISTED)
+    return RedirectResponse(
+        request.url_for('display_network_detail', network_id=network_id),
+        status_code=status.HTTP_303_SEE_OTHER
+    )

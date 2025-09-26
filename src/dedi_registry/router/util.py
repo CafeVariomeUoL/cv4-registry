@@ -112,19 +112,19 @@ async def build_nav_links(request: Request, db: Database) -> list[dict]:
 
     if username:
         nav_links.append({
-            'label': 'Admin',
+            'label': 'Dashboard',
             'url': request.url_for('get_admin_dashboard'),
             'active': path.startswith('/admin')
         })
         nav_links.append({
-            'label': f'{username} (logout)',
+            'label': f'Logout ({username})',
             'url': request.url_for('admin_logout'),
             'active': False
         })
     else:
         nav_links.append({
-            'label': 'Admin',
-            'url': request.url_for('get_admin_login_page'),
+            'label': 'Login',
+            'url': str(request.url_for('get_admin_login_page')) + f'?next={path}',
         })
 
     return nav_links

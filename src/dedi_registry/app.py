@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import HTTPException
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+from asgi_csrf import asgi_csrf
 
 from dedi_registry import __version__ as dedi_registry_version
 from dedi_registry.etc.consts import LOGGER, CONFIG
@@ -99,7 +100,7 @@ def create_app() -> FastAPI:
         SessionMiddleware,
         secret_key=CONFIG.secret_key,
         same_site='lax',
-        https_only=False,
+        https_only=CONFIG.use_https,
     )
 
     app.include_router(admin_router)
@@ -139,6 +140,17 @@ def create_app() -> FastAPI:
             context=context,
             status_code=exc.status_code
         )
+
+    def skip_paths(scope):
+        return scope['path'].startswith('/api/')
+
+    app = asgi_csrf(
+        app,
+        signing_secret=CONFIG.secret_key,
+        always_protect={'/admin/login'},
+        cookie_secure=CONFIG.use_https,
+        skip_if_scope=skip_paths,
+    )
 
     return app
 

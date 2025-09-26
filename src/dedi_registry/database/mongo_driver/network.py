@@ -163,6 +163,18 @@ class MongoNetworkRepository(NetworkRepository):
             {'$set': network.model_dump()}
         )
 
+    async def update_status(self, network_id: UUID, new_status: RecordStatus) -> None:
+        """
+        Update the status of an existing network in the repository. This method only updates
+        the status field of the network record to prevent data race conditions.
+        :param network_id: The ID of the network to update.
+        :param new_status: The new status to set for the network.
+        """
+        await self.collection.update_one(
+            {'networkId': str(network_id)},
+            {'$set': {'status': new_status.value}}
+        )
+
     async def search(self,
                      name: str | None = None,
                      description: str | None = None,

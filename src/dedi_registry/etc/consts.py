@@ -69,6 +69,11 @@ class Settings(BaseSettings):
         default_factory=secrets.token_urlsafe,
         description='Secret key for the application',
     )
+    use_https: bool = Field(
+        False,
+        description='Whether this application is behind an HTTPS proxy. This affects cookie settings, '
+                    'redirect URLs, and security headers.',
+    )
 
 
 CONFIG = Settings(_env_file=os.getenv('DR_ENV_FILE', 'conf/.env'))      # type: ignore

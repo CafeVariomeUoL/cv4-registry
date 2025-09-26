@@ -14,7 +14,6 @@
         {% endif %}
 
         <form method="post" action="{{ login_action }}" novalidate>
-          <!-- If you add CSRF later, pass csrf_token in context and it'll render -->
           {% if csrf_token %}
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
           {% endif %}
@@ -47,6 +46,8 @@
               required
             >
           </div>
+
+          <input type="hidden" name="csrftoken" value="{{ request.scope.csrftoken() }}">
 
           <button type="submit" class="btn btn-primary w-100">Sign in</button>
         </form>

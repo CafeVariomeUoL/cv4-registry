@@ -42,6 +42,9 @@ class RecordAction(Enum):
     CREATE = 'create'
     UPDATE = 'update'
     DELETE = 'delete'
+    APPROVE = 'approve'
+    REJECT = 'reject'
+    BLACKLIST = 'blacklist'
 
 
 class RecordStatus(Enum):

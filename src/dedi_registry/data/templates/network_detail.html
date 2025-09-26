@@ -10,7 +10,7 @@
 </div>
 
 <!-- Network summary -->
-<div class="card mb-4 shadow-sm">
+<div class="card mb-3 shadow-sm">
   <div class="card-body">
     <dl class="row mb-0">
       <dt class="col-sm-3">Network ID</dt>
@@ -42,6 +42,32 @@
     </dl>
   </div>
 </div>
+
+<!-- Optional admin actions -->
+{% if actions and actions|length > 0 %}
+  <div class="card mb-4 border-0">
+    <div class="card-body pt-2 pb-0">
+      <h2 class="h6 mb-3">Actions</h2>
+      <div class="d-flex flex-wrap gap-2">
+        {% for action in actions %}
+          {% set btn_color = action.color or 'secondary' %}
+          <form method="post" action="{{ action.post_url }}" class="d-inline">
+            <input type="hidden" name="csrftoken" value="{{ request.scope.csrftoken() }}">
+            <button
+              type="submit"
+              class="btn btn-{{ btn_color }} btn-sm"
+              {% if btn_color in ['danger','warning'] %}
+                onclick="return confirm('Are you sure?');"
+              {% endif %}
+            >
+              {{ action.label }}
+            </button>
+          </form>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endif %}
 
 <!-- Nodes list -->
 <h2 class="h5 mb-3">Nodes</h2>
