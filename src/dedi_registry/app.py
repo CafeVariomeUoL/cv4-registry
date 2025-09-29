@@ -96,6 +96,16 @@ def create_app() -> FastAPI:
         ),
     )
 
+    @app.middleware('http')
+    async def disable_cors_for_api(request, call_next):
+        if request.url.path.startswith('/api'):
+            request.scope['cors_exempt'] = True
+
+        response = await call_next(request)
+        response.headers['Access-Control-Allow-Origin'] = '*'
+
+        return response
+
     app.add_middleware(
         SessionMiddleware,
         secret_key=CONFIG.secret_key,

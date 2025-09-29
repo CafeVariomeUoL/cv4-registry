@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 
 from dedi_registry.etc.consts import CONFIG
 from dedi_registry.database import Database
-from dedi_registry.model.network import NetworkAuditRequestDetail
+from dedi_registry.model.network import Network, NetworkAuditRequestDetail
 
 
 _trusted_nets = [ipaddress.ip_network(tp, strict=False) for tp in CONFIG.trusted_proxies]
@@ -128,6 +128,37 @@ async def build_nav_links(request: Request, db: Database) -> list[dict]:
         })
 
     return nav_links
+
+
+def serialise_network(network: Network) -> dict:
+    """
+    Deterministically serialise a network to a dictionary for hashing.
+
+    Applied transformations:
+    - Remove fields that are not part of the submission (status, etc.)
+    - Remove empty fields and null values
+    - Sort all fields alphabetically
+    - Sort nodes alphabetically by node ID
+    :param network: The network to serialise.
+    :return: A dictionary representation of the network.
+    """
+    payload = network.model_dump()
+
+    # Remove non-submission fields
+    for field in ['status', 'version', 'createdAt', 'updatedAt']:
+        payload.pop(field, None)
+
+    # Remove empty fields and null values
+    payload = {k: v for k, v in payload.items() if v not in (None, [], {})}
+
+    # Sort nodes by node ID
+    if 'nodes' in payload:
+        payload['nodes'] = sorted(payload['nodes'], key=lambda n: str(n['nodeId']))
+
+    # Sort all fields alphabetically
+    payload = dict(sorted(payload.items()))
+
+    return payload
 
 
 def get_templates() -> Jinja2Templates:
