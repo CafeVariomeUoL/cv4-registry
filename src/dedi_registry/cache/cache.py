@@ -65,6 +65,7 @@ def get_active_cache() -> Cache:
         redis_client = redis.Redis(
             host=CONFIG.redis_host,
             port=CONFIG.redis_port,
+            decode_responses=True,
         )
         RedisCache.set_client(redis_client)
         _active_cache = RedisCache()

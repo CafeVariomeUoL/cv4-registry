@@ -40,7 +40,12 @@ class RedisChallengeCache(ChallengeCache):
         :param nonce: The challenge nonce to retrieve
         :return: The difficulty of the challenge if it exists and is not expired, otherwise None
         """
-        return await self.db.get(f'challenge:{nonce}')
+        difficulty = await self.db.get(f'challenge:{nonce}')
+
+        if difficulty is not None:
+            return int(difficulty)
+
+        return None
 
 
 class RedisCache(Cache):
