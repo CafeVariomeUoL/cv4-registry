@@ -102,7 +102,8 @@ def create_app() -> FastAPI:
             request.scope['cors_exempt'] = True
 
         response = await call_next(request)
-        response.headers['Access-Control-Allow-Origin'] = '*'
+        if request.url.path.startswith('/api'):
+            response.headers['Access-Control-Allow-Origin'] = '*'
 
         return response
 
@@ -119,6 +120,14 @@ def create_app() -> FastAPI:
 
     static_file_path = pkg_resources.files('dedi_registry.data') / 'static'
     app.mount('/static', StaticFiles(directory=str(static_file_path)), name='static')
+
+    @app.get('/health', include_in_schema=False)
+    async def health_check():
+        """
+        Health check endpoint to verify the application is running.
+        :return: A JSON response indicating the application status.
+        """
+        return {'status': 'ok'}
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request, exc):
