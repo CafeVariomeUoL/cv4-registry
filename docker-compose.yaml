@@ -1,0 +1,51 @@
+services:
+  redis:
+    image: redis:8.2
+    restart: unless-stopped
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mongodb:
+    image: mongo:8.0.14
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: [ "CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping:1 }).ok' | grep 1" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  registry:
+    image: firefox2100/dedi-registry:latest
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - DR_AUTO_APPROVE=false
+      - DR_ALLOW_ORIGINS=[]
+      - DR_TRUSTED_PROXIES=["127.0.0.1"]
+      - DR_DATABASE_DRIVER=mongo
+      - DR_MONGODB_HOST=mongodb
+      - DR_MONGODB_PORT=27017
+      - DR_MONGODB_DB_NAME=ddn-registry
+      - DR_CACHE_DRIVER=redis
+      - DR_REDIS_HOST=redis
+      - DR_REDIS_PORT=6379
+      - DR_LOGGING_LEVEL=INFO
+      - DR_SECRET_KEY=your-random-secret-key
+      - DR_USE_HTTPS=true
+
+volumes:
+  mongo_data:
+  redis_data:

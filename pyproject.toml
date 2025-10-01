@@ -25,7 +25,8 @@ dependencies = [
     "argon2-cffi~=25.1.0",
     "asgi-csrf~=0.11",
     "cryptography~=45.0.5",
-    "fastapi~=0.117.1",
+    "fastapi~=0.118.0",
+    "httpx~=0.28.1",
     "itsdangerous~=2.2.0",
     "jinja2~=3.1.6",
     "jsonpatch~=1.33",
@@ -43,6 +44,15 @@ dynamic = [
     "version"
 ]
 
+[project.optional-dependencies]
+test = [
+    "beautifulsoup4~=4.14.2",
+    "pytest~=8.4.2",
+    "pytest-asyncio~=1.2.0",
+    "pytest-cov~=7.0.0",
+    "pylint~=3.3.8",
+]
+
 [project.urls]
 Homepage = "https://github.com/Firefox2100/dedi-registry"
 Repository = "https://github.com/Firefox2100/dedi-registry.git"
@@ -51,7 +61,14 @@ Issues = "https://github.com/Firefox2100/dedi-registry/issues"
 [tool.setuptools.dynamic]
 version = {attr = "dedi_registry.__version__"}
 
+[tool.setuptools.package-data]
+dedi_registry = ["data/**/*"]
 
 [project.scripts]
 dedi-registry = "dedi_registry.app:main"
 dedi-registry-cli = "dedi_registry.cli:cli_main"
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+asyncio_mode = "auto"
