@@ -279,7 +279,8 @@ def reformat_pem(pem: str) -> str:
     pem = pem.strip()
 
     # Remove existing line breaks
-    pem = pem.replace('\n', '').replace('\r', '')
+    pem = (pem.replace('\n', '').replace('\r', '')
+           .replace('\\n', '').replace('\\r', ''))
 
     # Split the PEM into header, body, and footer
     header = '-----BEGIN PUBLIC KEY-----'

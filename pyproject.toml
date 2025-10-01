@@ -46,6 +46,7 @@ dynamic = [
 
 [project.optional-dependencies]
 test = [
+    "asgi-lifespan~=2.1.0",
     "beautifulsoup4~=4.14.2",
     "pytest~=8.4.2",
     "pytest-asyncio~=1.2.0",

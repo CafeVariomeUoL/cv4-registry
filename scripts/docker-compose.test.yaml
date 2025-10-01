@@ -1,3 +1,5 @@
+# A docker compose file to startup all dependencies for running tests
+
 services:
   redis:
     image: redis:8.2
@@ -5,6 +7,8 @@ services:
     command: ["redis-server", "--save", "", "--appendonly", "no"]
     volumes:
       - redis_data:/data
+    ports:
+      - "16379:6379"
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -16,38 +20,13 @@ services:
     restart: unless-stopped
     volumes:
       - mongo_data:/data/db
+    ports:
+      - "37017:27017"
     healthcheck:
       test: [ "CMD-SHELL", "mongosh --quiet --eval 'db.runCommand({ ping:1 }).ok' | grep 1" ]
       interval: 5s
       timeout: 5s
       retries: 20
-
-  registry:
-    # Should be a locally built test image
-    image: firefox2100/dedi-registry:test
-    command: ["--host", "0.0.0.0", "--port", "5876", "--log-config", "/app/conf/uvicorn-log.config.yaml"]
-    ports:
-      - "5876:5876"
-    depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    environment:
-      - DR_AUTO_APPROVE=false
-      - DR_ALLOW_ORIGINS=[]
-      - DR_TRUSTED_PROXIES=["127.0.0.1"]
-      - DR_DATABASE_DRIVER=mongo
-      - DR_MONGODB_HOST=mongodb
-      - DR_MONGODB_PORT=27017
-      - DR_MONGODB_DB_NAME=ddn-registry
-      - DR_CACHE_DRIVER=redis
-      - DR_REDIS_HOST=redis
-      - DR_REDIS_PORT=6379
-      - DR_LOGGING_LEVEL=DEBUG
-      - DR_USE_HTTPS=false
-      - DR_ADMIN_USERNAME=test_admin
-      - DR_ADMIN_PASSWORD=test_password
 
 volumes:
   mongo_data:

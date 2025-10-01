@@ -1,15 +1,17 @@
 import os
 import re
-import asyncio
-import time
+import httpx
 import uuid
 import json
 import hashlib
-import httpx
 import pytest
+from httpx import ASGITransport
 from bs4 import BeautifulSoup, SoupStrainer
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import ec
+from asgi_lifespan import LifespanManager
+
+from dedi_registry.app import create_app
 
 
 def reformat_pem(pem: str) -> str:
@@ -79,27 +81,14 @@ def admin_credentials():
 
 @pytest.fixture(scope='session')
 async def client(base_url):
-    async with httpx.AsyncClient(base_url=base_url) as client:
-        client.headers.update({
-            'User-Agent': 'DediRegistrySmokeTest/1.0',
-        })
-        yield client
-
-
-@pytest.fixture(scope='session', autouse=True)
-async def wait_for_service(client):
-    start_time = time.time()
-    while time.time() - start_time < 60:
-        try:
-            response = await client.get('/health')
-
-            if response.status_code == 200:
-                return
-        except httpx.RequestError:
-            pass
-        await asyncio.sleep(2)
-
-    pytest.fail('Service did not become healthy within 60 seconds')
+    app = create_app()
+    async with LifespanManager(app) as manager:
+        transport = ASGITransport(app=manager.app)
+        async with httpx.AsyncClient(transport=transport, base_url=base_url) as client:
+            client.headers.update({
+                'User-Agent': 'DediRegistrySmokeTest/1.0',
+            })
+            yield client
 
 
 def solve_challenge(nonce: str, difficulty: int) -> int:
