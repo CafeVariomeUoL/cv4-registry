@@ -4,35 +4,8 @@ from pymongo.asynchronous.database import AsyncDatabase
 from pymongo.asynchronous.cursor import AsyncCursor
 
 from dedi_registry.etc.enums import RecordStatus
-from dedi_registry.model.network import Network, NetworkAuditRequestDetail, NetworkAudit, NetworkRepository, NetworkAuditRepository
-
-
-def reformat_pem(pem: str) -> str:
-    """
-    Reformat a PEM string to ensure proper line breaks.
-    :param pem: The PEM string to reformat.
-    :return: A reformatted PEM string. Line break every 64 characters within the body.
-    """
-    pem = pem.strip()
-
-    # Remove existing line breaks
-    pem = pem.replace('\n', '').replace('\r', '')
-
-    # Split the PEM into header, body, and footer
-    header = '-----BEGIN PUBLIC KEY-----'
-    footer = '-----END PUBLIC KEY-----'
-    if not (pem.startswith(header) and pem.endswith(footer)):
-        raise ValueError('Invalid PEM format')
-
-    body = pem[len(header):-len(footer)].strip()
-
-    # Insert line breaks every 64 characters in the body
-    body_lines = [body[i:i+64] for i in range(0, len(body), 64)]
-    reformatted_body = '\n'.join(body_lines)
-
-    # Reconstruct the PEM with proper formatting
-    reformatted_pem = f'{header}\n{reformatted_body}\n{footer}'
-    return reformatted_pem
+from dedi_registry.etc.utils import reformat_pem
+from dedi_registry.model.network import Network, NetworkAudit, NetworkRepository, NetworkAuditRepository
 
 
 class MongoNetworkRepository(NetworkRepository):

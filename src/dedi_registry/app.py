@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import HTTPException
+from fastapi.exception_handlers import http_exception_handler as fastapi_http_exception_handler
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from asgi_csrf import asgi_csrf
 
@@ -131,9 +132,11 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request, exc):
+        LOGGER.error('HTTP Exception: %s', exc)
+
         if request.url.path.startswith('/api'):
-            # Do not use HTML responses for API endpoints
-            return await FastAPI.exception_handler(app, request, exc)
+            # Do not use HTML responses for API endpoints, pass it to FastAPI's default handler
+            return await fastapi_http_exception_handler(request, exc)
 
         # For UI endpoints, build navigation links and render an error page
         db = get_active_db()

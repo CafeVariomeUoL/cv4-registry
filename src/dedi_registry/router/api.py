@@ -5,13 +5,13 @@ from uuid import UUID
 import jsonpatch
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import ec, utils
+from cryptography.hazmat.primitives.asymmetric import ec
 from pydantic import Field, ConfigDict
 from fastapi import APIRouter, HTTPException, Query, Header, Depends, status
 
 from dedi_registry.etc.consts import LOGGER, CONFIG
 from dedi_registry.etc.enums import DatabaseConfigType, RecordAction, RecordStatus
-from dedi_registry.etc.utils import validate_hash_challenge
+from dedi_registry.etc.utils import validate_hash_challenge, reformat_pem
 from dedi_registry.cache import Cache, get_active_cache
 from dedi_registry.database import Database, get_active_db
 from dedi_registry.model.base import JsonModel
@@ -233,7 +233,7 @@ async def get_network_v1(network_id: str,
     return network
 
 
-@api_router.get('/v1/networks/{network_id}/audit', response_model=list[NetworkAudit])
+@api_router.get('/v1/networks/{network_id}/audits', response_model=list[NetworkAudit])
 async def get_network_audit_v1(network_id: str,
                                db: Database = Depends(get_active_db)
                                ):
@@ -269,7 +269,6 @@ async def update_network_v1(network_id: str,
                                 description='The signature of the sender node over the network payload'
                             ),
                             db: Database = Depends(get_active_db),
-                            cache: Cache = Depends(get_active_cache),
                             request_detail: NetworkAuditRequestDetail = Depends(get_request_detail),
                             ):
     """
@@ -279,7 +278,6 @@ async def update_network_v1(network_id: str,
     :param sender_node: The ID of the node sending the request.
     :param sender_signature: The signature of the sender node over the network payload.
     :param db: The database instance to update the network in.
-    :param cache: The cache instance to retrieve node details for signature verification.
     :param request_detail: Details about the request for auditing purposes.
     :return: The updated network details.
     """
@@ -315,8 +313,24 @@ async def update_network_v1(network_id: str,
             detail='Network is blacklisted and cannot be updated.'
         )
 
-    serialised_new_network = json.dumps(serialise_network(network))
+    network.public_key = reformat_pem(network.public_key)
+    for node in network.nodes:
+        node.public_key = reformat_pem(node.public_key)
+
+    serialised_new_network = json.dumps(
+        serialise_network(network),
+        sort_keys=True,
+        separators=(',', ':'),
+        ensure_ascii=False,
+    )
     management_key = serialization.load_pem_public_key(existing_network.public_key.encode())
+
+    LOGGER.debug('New network serialised for signature verification: %s', serialised_new_network)
+    LOGGER.debug('Used public key: %s', management_key.public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo
+    ).decode())
+    LOGGER.debug('Sender signature: %s', sender_signature)
 
     try:
         management_key.verify(

@@ -1,7 +1,7 @@
 import os
 import logging
 import secrets
-from typing import Literal
+from typing import Literal, Optional
 from argon2 import PasswordHasher
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -73,6 +73,17 @@ class Settings(BaseSettings):
         False,
         description='Whether this application is behind an HTTPS proxy. This affects cookie settings, '
                     'redirect URLs, and security headers.',
+    )
+
+    admin_username: Optional[str] = Field(
+        None,
+        description='Username for the initial admin user. This account will be created if the user database '
+                    'is empty on first run. Only recommended to set on docker testing deployments.',
+    )
+    admin_password: Optional[str] = Field(
+        None,
+        description='Password for the initial admin user. This account will be created if the user database '
+                    'is empty on first run. Only recommended to set on docker testing deployments.',
     )
 
 

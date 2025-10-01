@@ -1,6 +1,7 @@
 from pymongo import AsyncMongoClient
 
-from dedi_registry.etc.consts import CONFIG
+from dedi_registry.etc.consts import CONFIG, PH
+from dedi_registry.model.user import User
 from ..database import Database
 from .config import MongoConfigRepository
 from .network import MongoNetworkRepository, MongoNetworkAuditRepository
@@ -81,6 +82,16 @@ class MongoDatabase(Database):
 
         This method should be called many times without side effects.
         """
+        user_count = await self.db.users.count_documents({})
+
+        if user_count == 0 and CONFIG.admin_username is not None and CONFIG.admin_password is not None:
+            # Create the initial admin user
+            initial_admin = User(
+                username=CONFIG.admin_username,
+                password=PH.hash(CONFIG.admin_password),
+            )
+
+            await self.users.save(initial_admin)
 
     async def close(self) -> None:
         """

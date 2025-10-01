@@ -4,7 +4,6 @@ Utility classes and functions for various operations in the application.
 
 import threading
 import hashlib
-from urllib.parse import urlparse
 
 
 class ThreadSafeDict(dict):
@@ -251,28 +250,6 @@ class ThreadSafeQueue:
         self._data.clear()
 
 
-def url_to_reverse_domain(url: str) -> str:
-    """
-    Convert a URL to a reverse domain annotation
-    :param url: The URL to convert
-    :return: The reverse domain annotation
-    """
-    parsed = urlparse(url)
-
-    hostname = parsed.hostname or ""
-
-    if hostname.replace(".", "").isdigit():
-        host_parts = hostname.split(".")[::-1]
-    else:
-        host_parts = hostname.split(".")[::-1]
-
-    host_parts = [h for h in host_parts if h]
-
-    path_parts = [p for p in parsed.path.strip("/").split("/") if p]
-
-    return ".".join(host_parts + path_parts)
-
-
 def validate_hash_challenge(nonce: str,
                             difficulty: int,
                             solution: str,
@@ -291,3 +268,31 @@ def validate_hash_challenge(nonce: str,
     target = '0' * difficulty
 
     return bin_hash.startswith(target)
+
+
+def reformat_pem(pem: str) -> str:
+    """
+    Reformat a PEM string to ensure proper line breaks.
+    :param pem: The PEM string to reformat.
+    :return: A reformatted PEM string. Line break every 64 characters within the body.
+    """
+    pem = pem.strip()
+
+    # Remove existing line breaks
+    pem = pem.replace('\n', '').replace('\r', '')
+
+    # Split the PEM into header, body, and footer
+    header = '-----BEGIN PUBLIC KEY-----'
+    footer = '-----END PUBLIC KEY-----'
+    if not (pem.startswith(header) and pem.endswith(footer)):
+        raise ValueError('Invalid PEM format')
+
+    body = pem[len(header):-len(footer)].strip()
+
+    # Insert line breaks every 64 characters in the body
+    body_lines = [body[i:i+64] for i in range(0, len(body), 64)]
+    reformatted_body = '\n'.join(body_lines)
+
+    # Reconstruct the PEM with proper formatting
+    reformatted_pem = f'{header}\n{reformatted_body}\n{footer}'
+    return reformatted_pem
