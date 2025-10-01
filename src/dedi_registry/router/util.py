@@ -1,5 +1,8 @@
+import re
+import posixpath
 import ipaddress
 import importlib.resources as pkg_resources
+from urllib.parse import urlsplit, urlunsplit
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
@@ -9,6 +12,17 @@ from dedi_registry.model.network import Network, NetworkAuditRequestDetail
 
 
 _trusted_nets = [ipaddress.ip_network(tp, strict=False) for tp in CONFIG.trusted_proxies]
+_allowed_redirect_destinations = [
+    '/',
+    '/networks',
+    '/admin',
+    '/admin/login',
+]
+_allowed_redirect_regex = [
+    re.compile(
+        r'^/networks/[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-5][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$'
+    )
+]
 
 
 def _get_ip_chain(request: Request) -> list[str]:
@@ -171,3 +185,42 @@ def get_templates() -> Jinja2Templates:
 
 
 TEMPLATES = get_templates()
+
+
+def sanitise_next_url(next_url: str | None = None,
+                      default: str = '/',
+                      ) -> str:
+    """
+    Sanitise the next URL to prevent open redirect vulnerabilities.
+    :param next_url: The next URL to sanitise.
+    :param default: The default URL to use if the next URL is not valid.
+    :return: The sanitised next URL.
+    """
+    if not next_url:
+        return default
+
+    parts = urlsplit(next_url)
+
+    if parts.scheme or parts.netloc:
+        return default
+
+    normalised = posixpath.normpath(parts.path or '/')
+    if not normalised.startswith('/'):
+        normalised = '/' + normalised
+
+    while normalised.startswith('//'):
+        normalised = normalised[1:]
+
+    def _is_allowed(path: str) -> bool:
+        if path in _allowed_redirect_destinations:
+            return True
+
+        return any(regex.match(path) for regex in _allowed_redirect_regex)
+
+    if not _is_allowed(normalised):
+        return default
+
+    # Shouldn't have fragments for now. Change if needed.
+    clean = urlunsplit(('', '', normalised, parts.query, ''))
+
+    return clean

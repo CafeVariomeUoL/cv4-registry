@@ -8,7 +8,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from dedi_registry.etc.enums import RecordStatus, RecordAction
 from dedi_registry.database import Database, get_active_db
 from dedi_registry.model.network import NetworkAudit, NetworkAuditRequestDetail
-from .util import TEMPLATES, build_nav_links, get_request_detail
+from .util import TEMPLATES, build_nav_links, get_request_detail, sanitise_next_url
 
 
 admin_router = APIRouter(
@@ -69,6 +69,8 @@ async def get_admin_login_page(request: Request,
     :param db: The database instance to retrieve user information.
     :return: An HTML response with the admin login page content.
     """
+    next_url = sanitise_next_url(next_url)
+
     if request.session.get('username', None):
         # If already logged in, redirect to the dashboard or next_url
         redirect_url = next_url or request.url_for('get_admin_dashboard')
@@ -99,6 +101,8 @@ async def post_admin_login(request: Request,
     \f
     :return:
     """
+    next_url = sanitise_next_url(next_url)
+
     def login_redirect(error: str | None = None):
         params = {}
         if error:
