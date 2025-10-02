@@ -16,6 +16,10 @@ admin_router = APIRouter(
     tags=['UI', 'Admin'],
 )
 
+_404_HTML = '404.html'
+_404_TITLE = 'Network Not Found | Decentralised Discovery Network Registry'
+_404_RETURN_LABEL = 'Back to Networks'
+
 
 async def change_network_status(db: Database,
                                 network_uuid: UUID,
@@ -188,13 +192,13 @@ async def approve_network_registration(request: Request,
 
     if not network:
         return TEMPLATES.TemplateResponse(
-            '404.html',
+            _404_HTML,
             {
                 'request': request,
-                'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                'page_title': _404_TITLE,
                 'detail': f'Network with ID {network_id} not found.',
                 'return_url': request.url_for('display_networks'),
-                'return_label': 'Back to Networks',
+                'return_label': _404_RETURN_LABEL,
                 'nav_links': await build_nav_links(request, db),
             },
             status_code=404,
@@ -234,13 +238,13 @@ async def reject_network_registration(request: Request,
 
         if not network:
             return TEMPLATES.TemplateResponse(
-                '404.html',
+                _404_HTML,
                 {
                     'request': request,
-                    'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                    'page_title': _404_TITLE,
                     'detail': f'Network with ID {network_id} not found.',
                     'return_url': request.url_for('display_networks'),
-                    'return_label': 'Back to Networks',
+                    'return_label': _404_RETURN_LABEL,
                     'nav_links': await build_nav_links(request, db),
                 },
                 status_code=404,
@@ -280,13 +284,13 @@ async def blacklist_network(request: Request,
 
     if not network:
         return TEMPLATES.TemplateResponse(
-            '404.html',
+            _404_HTML,
             {
                 'request': request,
-                'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                'page_title': _404_TITLE,
                 'detail': f'Network with ID {network_id} not found.',
                 'return_url': request.url_for('display_networks'),
-                'return_label': 'Back to Networks',
+                'return_label': _404_RETURN_LABEL,
                 'nav_links': await build_nav_links(request, db),
             },
             status_code=404,

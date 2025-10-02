@@ -59,7 +59,7 @@ class Database(ABC):
         """
 
 
-_active_db: Database = None
+_active_db: Database | None = None
 
 
 def get_active_db() -> Database:

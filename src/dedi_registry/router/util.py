@@ -67,7 +67,7 @@ def _get_ip_chain(request: Request) -> list[str]:
     return [request.client.host]
 
 
-async def get_request_detail(request: Request) -> NetworkAuditRequestDetail:
+def get_request_detail(request: Request) -> NetworkAuditRequestDetail:
     """
     Extract request details such as IP address and User-Agent from the incoming request.
     :param request: The incoming HTTP request.
