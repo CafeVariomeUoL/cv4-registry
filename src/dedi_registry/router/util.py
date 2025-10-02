@@ -1,12 +1,10 @@
 import re
 import posixpath
-import ipaddress
 import importlib.resources as pkg_resources
 from urllib.parse import urlsplit, urlunsplit
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 
-from dedi_registry.etc.consts import CONFIG
 from dedi_registry.database import Database
 from dedi_registry.model.network import Network, NetworkAuditRequestDetail
 

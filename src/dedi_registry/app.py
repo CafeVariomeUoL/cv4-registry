@@ -110,6 +110,14 @@ def create_app() -> FastAPI:
 
         response = await call_next(request)
 
+        if any([
+            request.url.path.startswith('/static/'),
+            request.url.path.startswith('/api/'),
+            request.url.path.startswith('/docs'),
+            request.url.path.startswith('/redoc'),
+        ]):
+            return response
+
         # Build a strict policy (adjust as you add features)
         policy = "; ".join([
             "default-src 'self'",
