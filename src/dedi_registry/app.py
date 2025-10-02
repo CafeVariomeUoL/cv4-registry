@@ -6,12 +6,15 @@ from starlette.middleware.sessions import SessionMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import Response
 from fastapi.exceptions import HTTPException
 from fastapi.exception_handlers import http_exception_handler as fastapi_http_exception_handler
 from asgi_csrf import asgi_csrf
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from dedi_registry import __version__ as dedi_registry_version
 from dedi_registry.etc.consts import LOGGER, CONFIG
+from dedi_registry.etc.metrics import REGISTRY, PrometheusMetricsMiddleware
 from dedi_registry.database import get_active_db
 from dedi_registry.router import admin_router, api_router, ui_router
 from dedi_registry.router.util import TEMPLATES, build_nav_links
@@ -147,6 +150,8 @@ def create_app() -> FastAPI:
         https_only=CONFIG.use_https,
     )
 
+    app.add_middleware(PrometheusMetricsMiddleware)
+
     app.include_router(admin_router)
     app.include_router(api_router)
     app.include_router(ui_router)
@@ -161,6 +166,17 @@ def create_app() -> FastAPI:
         :return: A JSON response indicating the application status.
         """
         return {'status': 'ok'}
+
+    @app.get('/metrics', include_in_schema=False)
+    async def export_metrics():
+        """
+        Endpoint to export Prometheus metrics.
+        :return: Metrics in Prometheus format.
+        """
+        return Response(
+            content=generate_latest(REGISTRY),
+            media_type=CONTENT_TYPE_LATEST,
+        )
 
     @app.exception_handler(HTTPException)
     async def http_exception_handler(request, exc):

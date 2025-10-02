@@ -60,6 +60,33 @@ async def change_network_status(db: Database,
     ))
 
 
+def require_admin_session(request: Request):
+    if not request.session.get('username', None):
+        return RedirectResponse(
+            request.url_for('get_admin_login_page', next=request.url.path),
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    return None
+
+async def get_network_or_404(request: Request, db: Database, network_id: str):
+    network_uuid = UUID(network_id)
+    network = await db.networks.get(network_uuid)
+    if not network:
+        return TEMPLATES.TemplateResponse(
+            _404_HTML,
+            {
+                'request': request,
+                'page_title': _404_TITLE,
+                'detail': f'Network with ID {network_id} not found.',
+                'return_url': request.url_for('display_networks'),
+                'return_label': _404_RETURN_LABEL,
+                'nav_links': await build_nav_links(request, db),
+            },
+            status_code=404,
+        )
+    return network
+
+
 @admin_router.get('/login', response_class=HTMLResponse)
 async def get_admin_login_page(request: Request,
                                next_url: str | None = Query(None, alias="next"),
@@ -180,29 +207,20 @@ async def approve_network_registration(request: Request,
                                        ):
     """
     Approve a network registration request.
+    \f
+    :param request: The incoming HTTP request.
+    :param network_id: The ID of the network to approve.
+    :param db: The database instance to perform the operation.
+    :param request_detail: Details about the request for auditing purposes.
+    :return: A redirection response to the network detail page.
     """
-    if not request.session.get('username', None):
-        return RedirectResponse(
-            request.url_for('get_admin_login_page', next=request.url.path),
-            status_code=status.HTTP_303_SEE_OTHER
-        )
+    session_redirect = require_admin_session(request)
+    if session_redirect:
+        return session_redirect
 
-    network_uuid = UUID(network_id)
-    network = await db.networks.get(network_uuid)
-
-    if not network:
-        return TEMPLATES.TemplateResponse(
-            _404_HTML,
-            {
-                'request': request,
-                'page_title': _404_TITLE,
-                'detail': f'Network with ID {network_id} not found.',
-                'return_url': request.url_for('display_networks'),
-                'return_label': _404_RETURN_LABEL,
-                'nav_links': await build_nav_links(request, db),
-            },
-            status_code=404,
-        )
+    network = await get_network_or_404(request, db, network_id)
+    if isinstance(network, HTMLResponse):
+        return network
 
     if network.status == RecordStatus.ACTIVE:
         return RedirectResponse(
@@ -210,7 +228,7 @@ async def approve_network_registration(request: Request,
             status_code=status.HTTP_303_SEE_OTHER
         )
 
-    await change_network_status(db, network_uuid, request_detail, RecordStatus.ACTIVE)
+    await change_network_status(db, UUID(network_id), request_detail, RecordStatus.ACTIVE)
 
     return RedirectResponse(
         request.url_for('display_network_detail', network_id=network_id),
@@ -226,29 +244,20 @@ async def reject_network_registration(request: Request,
                                       ):
         """
         Reject a network registration request.
+        \f
+        :param request: The incoming HTTP request.
+        :param network_id: The ID of the network to reject.
+        :param db: The database instance to perform the operation.
+        :param request_detail: Details about the request for auditing purposes.
+        :return: A redirection response to the network detail page.
         """
-        if not request.session.get('username', None):
-            return RedirectResponse(
-                request.url_for('get_admin_login_page', next=request.url.path),
-                status_code=status.HTTP_303_SEE_OTHER
-            )
+        session_redirect = require_admin_session(request)
+        if session_redirect:
+            return session_redirect
 
-        network_uuid = UUID(network_id)
-        network = await db.networks.get(network_uuid)
-
-        if not network:
-            return TEMPLATES.TemplateResponse(
-                _404_HTML,
-                {
-                    'request': request,
-                    'page_title': _404_TITLE,
-                    'detail': f'Network with ID {network_id} not found.',
-                    'return_url': request.url_for('display_networks'),
-                    'return_label': _404_RETURN_LABEL,
-                    'nav_links': await build_nav_links(request, db),
-                },
-                status_code=404,
-            )
+        network = await get_network_or_404(request, db, network_id)
+        if isinstance(network, HTMLResponse):
+            return network
 
         if network.status == RecordStatus.REJECTED:
             return RedirectResponse(
@@ -256,7 +265,7 @@ async def reject_network_registration(request: Request,
                 status_code=status.HTTP_303_SEE_OTHER
             )
 
-        await change_network_status(db, network_uuid, request_detail, RecordStatus.REJECTED)
+        await change_network_status(db, UUID(network_id), request_detail, RecordStatus.REJECTED)
 
         return RedirectResponse(
             request.url_for('display_network_detail', network_id=network_id),
@@ -272,36 +281,27 @@ async def blacklist_network(request: Request,
                             ):
     """
     Blacklist a network.
+    \f
+    :param request: The incoming HTTP request.
+    :param network_id: The ID of the network to blacklist.
+    :param db: The database instance to perform the operation.
+    :param request_detail: Details about the request for auditing purposes.
+    :return: A redirection response to the network detail page.
     """
-    if not request.session.get('username', None):
-        return RedirectResponse(
-            request.url_for('get_admin_login_page', next=request.url.path),
-            status_code=status.HTTP_303_SEE_OTHER
-        )
+    session_redirect = require_admin_session(request)
+    if session_redirect:
+        return session_redirect
 
-    network_uuid = UUID(network_id)
-    network = await db.networks.get(network_uuid)
-
-    if not network:
-        return TEMPLATES.TemplateResponse(
-            _404_HTML,
-            {
-                'request': request,
-                'page_title': _404_TITLE,
-                'detail': f'Network with ID {network_id} not found.',
-                'return_url': request.url_for('display_networks'),
-                'return_label': _404_RETURN_LABEL,
-                'nav_links': await build_nav_links(request, db),
-            },
-            status_code=404,
-        )
+    network = await get_network_or_404(request, db, network_id)
+    if isinstance(network, HTMLResponse):
+        return network
 
     if network.status == RecordStatus.BLACKLISTED:
         return RedirectResponse(
             request.url_for('display_network_detail', network_id=network_id),
             status_code=status.HTTP_303_SEE_OTHER
         )
-    await change_network_status(db, network_uuid, request_detail, RecordStatus.BLACKLISTED)
+    await change_network_status(db, UUID(network_id), request_detail, RecordStatus.BLACKLISTED)
     return RedirectResponse(
         request.url_for('display_network_detail', network_id=network_id),
         status_code=status.HTTP_303_SEE_OTHER
