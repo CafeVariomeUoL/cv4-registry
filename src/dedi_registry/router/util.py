@@ -11,7 +11,6 @@ from dedi_registry.database import Database
 from dedi_registry.model.network import Network, NetworkAuditRequestDetail
 
 
-_trusted_nets = [ipaddress.ip_network(tp, strict=False) for tp in CONFIG.trusted_proxies]
 _allowed_redirect_destinations = [
     '/',
     '/networks',
