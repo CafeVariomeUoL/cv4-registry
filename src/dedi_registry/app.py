@@ -1,3 +1,4 @@
+import secrets
 import importlib.resources as pkg_resources
 from contextlib import asynccontextmanager
 import uvicorn
@@ -105,6 +106,35 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         if request.url.path.startswith('/api'):
             response.headers['Access-Control-Allow-Origin'] = '*'
+
+        return response
+
+    @app.middleware('http')
+    async def csp_headers(request, call_next):
+        nonce = secrets.token_urlsafe(16)
+        request.state.csp_nonce = nonce
+
+        response = await call_next(request)
+
+        # Build a strict policy (adjust as you add features)
+        policy = "; ".join([
+            "default-src 'self'",
+            "base-uri 'self'",
+            "object-src 'none'",
+            "frame-ancestors 'self'",
+            "form-action 'self'",
+            "img-src 'self' data:",
+            "font-src 'self'",
+            "style-src 'self'",
+            f"script-src 'self' 'nonce-{nonce}'",
+            "upgrade-insecure-requests",
+        ])
+
+        response.headers['Content-Security-Policy'] = policy
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['Permissions-Policy'] = 'geolocation=(), microphone=(), camera=()'
 
         return response
 
