@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import HTTPException
 from fastapi.exception_handlers import http_exception_handler as fastapi_http_exception_handler
-from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from asgi_csrf import asgi_csrf
 
 from dedi_registry import __version__ as dedi_registry_version
@@ -78,11 +77,6 @@ def create_app() -> FastAPI:
             },
         ],
         lifespan=lifespan,
-    )
-
-    app.add_middleware(
-        ProxyHeadersMiddleware,
-        trusted_hosts=CONFIG.trusted_proxies or '127.0.0.1'
     )
 
     app.add_middleware(

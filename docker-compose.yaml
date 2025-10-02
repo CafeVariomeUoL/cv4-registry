@@ -26,6 +26,8 @@ services:
     image: firefox2100/dedi-registry:latest
     ports:
       - "5000:5000"
+    command: ["--host", "0.0.0.0", "--port", "5000", "--log-config", "/app/conf/uvicorn-log.config.yaml",
+              "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1"]
     depends_on:
       mongodb:
         condition: service_healthy
@@ -34,7 +36,6 @@ services:
     environment:
       - DR_AUTO_APPROVE=false
       - DR_ALLOW_ORIGINS=[]
-      - DR_TRUSTED_PROXIES=["127.0.0.1"]
       - DR_DATABASE_DRIVER=mongo
       - DR_MONGODB_HOST=mongodb
       - DR_MONGODB_PORT=27017

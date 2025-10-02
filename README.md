@@ -83,7 +83,6 @@ The software is configured via environment variables. A sample configuration fil
 | DR_ENV_FILE        | Path to the .env file                                     | ./conf/.env   |
 | DR_AUTO_APPROVE    | Whether to automatically approve network registrations    | false         |
 | DR_ALLOW_ORIGINS   | List of allowed origins for CORS                          | []            |
-| DR_TRUSTED_PROXIES | List of trusted proxies for X-Forwarded-* headers         | []            |
 | DR_DATABASE_DRIVER | Database driver to use (mongo)                            | mongo         |
 | DR_MONGODB_HOST    | MongoDB host                                              | localhost     |
 | DR_MONGODB_PORT    | MongoDB port                                              | 27017         |

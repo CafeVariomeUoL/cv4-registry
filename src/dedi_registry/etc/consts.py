@@ -26,10 +26,6 @@ class Settings(BaseSettings):
         default_factory=list,
         description='List of allowed origins for CORS requests',
     )
-    trusted_proxies: list[str] = Field(
-        default_factory=list,
-        description='List of trusted proxy IP addresses for correct client IP resolution',
-    )
 
     database_driver: DatabaseDriverType = Field(
         DatabaseDriverType.MONGO,
