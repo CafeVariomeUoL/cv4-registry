@@ -68,7 +68,6 @@ jobs:
         env:
           DR_AUTO_APPROVE: "false"
           DR_ALLOW_ORIGINS: "[]"
-          DR_TRUSTED_PROXIES: '["127.0.0.1"]'
           DR_DATABASE_DRIVER: "mongo"
           DR_MONGODB_HOST: "localhost"
           DR_MONGODB_PORT: "37017"

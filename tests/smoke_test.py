@@ -10,8 +10,10 @@ from bs4 import BeautifulSoup, SoupStrainer
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import ec
 from asgi_lifespan import LifespanManager
+from typer.testing import CliRunner
 
 from dedi_registry.app import create_app
+from dedi_registry.cli.cli import create_cli
 
 
 def reformat_pem(pem: str) -> str:
@@ -64,7 +66,7 @@ NODE_PUBLIC_PEM_1 = reformat_pem(NODE_PRIVATE_KEY_1.public_key().public_bytes(
     encoding=serialization.Encoding.PEM,
     format=serialization.PublicFormat.SubjectPublicKeyInfo,
 ).decode())
-
+NEW_USER_ID = str(uuid.uuid4())
 
 @pytest.fixture(scope='session')
 def base_url():
@@ -377,3 +379,74 @@ async def test_admin_approve_network(client):
 
     assert approve_response.status_code == 303
     assert approve_response.headers['Location'] == f'{client.base_url}/networks/{NETWORK_ID}'
+
+
+async def test_logout(client, base_url):
+    logout_response = await client.get('/admin/logout')
+
+    assert logout_response.status_code == 303
+    assert logout_response.headers['Location'] == f'{base_url}/admin/login'
+
+
+async def test_create_user_with_cli(admin_credentials):
+    app = create_cli()
+    runner = CliRunner()
+
+    result = runner.invoke(app, ['user', 'create', f'smoke_test_{NEW_USER_ID}', '--password', 'TestPassword123!'])
+    assert result.exit_code == 0
+
+    result = runner.invoke(app, ['user', 'list'])
+    assert result.exit_code == 0
+    assert f'smoke_test_{NEW_USER_ID}' in result.output
+    assert admin_credentials['username'] in result.output
+
+
+async def test_login_with_new_user(client):
+    login_page_response = await client.get('/admin/login')
+
+    assert login_page_response.status_code == 200
+    csrf_token = client.cookies.get('csrftoken')
+    assert csrf_token is not None
+
+    form_data = {
+        'username': f'smoke_test_{NEW_USER_ID}',
+        'password': 'TestPassword123!',
+        'csrftoken': csrf_token,
+        'next': '/',
+    }
+
+    login_response = await client.post(
+        url='/admin/login',
+        data=form_data,
+        headers={
+            'Referer': f'{client.base_url}/admin/login',
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+    )
+
+    assert login_response.status_code == 303
+    assert login_response.headers['Location'] == '/'
+
+    homepage_response = await client.get('/')
+    homepage_text = homepage_response.text
+    nav_only = SoupStrainer('nav')
+    soup = BeautifulSoup(homepage_text, 'html.parser', parse_only=nav_only)
+
+    links = []
+    for a in soup.select('a.nav-link'):
+        text = ' '.join(a.get_text(strip=True).split())
+        href = a.get('href')
+        links.append((text, href))
+
+    texts = [t for t, _ in links]
+
+    # Should have a logout button
+    assert any(re.match(r'Logout \(.*\)', t) for t in texts)
+
+
+async def test_get_metrics(client):
+    response = await client.get('/metrics')
+
+    assert response.status_code == 200
+    assert 'text/plain' in response.headers['Content-Type']
+    assert 'http_requests_total' in response.text
