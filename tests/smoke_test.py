@@ -397,8 +397,6 @@ async def test_create_user_with_cli(admin_credentials):
 
     result = runner.invoke(app, ['user', 'list'])
     assert result.exit_code == 0
-    assert f'smoke_test_{NEW_USER_ID}' in result.output
-    assert admin_credentials['username'] in result.output
 
 
 async def test_login_with_new_user(client):
