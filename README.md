@@ -1,16 +1,14 @@
-# Decentralised Discovery Network Registry
+# Cafe Variome V4 Network Registry
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Firefox2100_dedi-registry&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Firefox2100_dedi-registry) [![Bugs](https://sonarcloud.io/api/project_badges/measure?project=Firefox2100_dedi-registry&metric=bugs)](https://sonarcloud.io/summary/new_code?id=Firefox2100_dedi-registry) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Firefox2100_dedi-registry&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Firefox2100_dedi-registry) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=Firefox2100_dedi-registry&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=Firefox2100_dedi-registry)
-
-A network registry for Decentralised Discovery Gateway systems to report the networks for public finding.
+A network registry for Cafe Variome V4 systems to report the networks for public finding. Forked from [Decentralised Discovery Network Registry](https://github.com/Firefox2100/dedi-registry).
 
 ## Features
 
-This is a simple registry service that allows Decentralised Discovery Gateway systems to register their networks. The gateway servers are running independently, without a place to control what networks are there and how to join or find them. This service fills in the blanks by allowing the nodes running the gateway service to optionally report the network information to the registry, so that the others can easily find and join the networks.
+This is a simple registry service that allows CV4 systems to register their networks. The CV4 servers are running independently, without a place to control what networks are there and how to join or find them. This service fills in the blanks by allowing the nodes running the CV4 software to optionally report the network information to the registry, so that the others can easily find and join the networks.
 
 The system offers:
 
-- **Network Registration**: Gateway nodes can register their networks with details such as network name, description, and connection information.
+- **Network Registration**: CV4 nodes can register their networks with details such as network name, description, and connection information.
 - **Network Discovery**: Users can search and discover registered networks based on various criteria.
 - **API Access**: Provides a RESTful API for programmatic access to register and discover
 - **Admin Controlling**: An admin may choose to manually approve or automatically approve a network registration. Later, they may decide to reject the registration anyway (which will remove it from the public listing), or ban the network permanently (which bans the registration of the same IP address, domain and user agent in the future).
@@ -69,7 +67,7 @@ The software can also be run using Docker. A `Dockerfile` is provided for buildi
 To build the Docker image locally (assuming already in the project directory):
 
 ```bash
-docker build -t firefox2100/dedi-registry:local .
+docker build -t brookeslab/cv4-registry:local .
 ```
 
 An example docker compose file is provided in the repository as a starting point. You may need to adjust the environment variables and volume mounts as needed.
@@ -97,7 +95,7 @@ The software is configured via environment variables. A sample configuration fil
 
 ## Licences and Third-Party Libraries
 
-The software itself is licensed under GPLv3.0 or later. See the [LICENSE](LICENSE) file for details.
+The software itself is licensed under MIT. See the [LICENSE](LICENSE) file for details. The upstream project is licensed under GPLv3.0 or later. This fork has obtained permissions from the original author to re-license under MIT.
 
 The software uses several third-party libraries, but does not re-distribute most of them. The ones that are bundled and re-distributed are:
 

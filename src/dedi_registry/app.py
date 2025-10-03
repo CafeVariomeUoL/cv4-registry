@@ -52,18 +52,18 @@ def create_app() -> FastAPI:
     :return: The configured FastAPI application instance.
     """
     app = FastAPI(
-        title='Decentralised Discovery Network Registry',
+        title='Cafe Variome V4 Network Registry',
         version=dedi_registry_version,
-        description='A network registry for Decentralised Discovery Gateway systems to '
+        description='A network registry for Decentralised Cafe Variome V4 systems to '
                     'report the networks for public finding.',
         contact={
-            'name': 'Firefox2100',
-            'url': 'https://github.com/Firefox2100',
-            'email': 'wangyunze16@gmail.com',
+            'name': 'Brookes Lab',
+            'url': 'https://brookeslab.le.ac.uk',
+            'email': 'brookeslab@leicester.ac.uk',
         },
         license_info={
-            'name': 'GNU GENERAL PUBLIC LICENSE v3.0',
-            'url': 'https://github.com/Firefox2100/dedi-registry/blob/main/LICENSE',
+            'name': 'MIT License',
+            'url': 'https://github.com/CafeVariomeUoL/cv4-registry/blob/main/LICENSE',
         },
         openapi_tags=[
             {

@@ -23,7 +23,7 @@ services:
       retries: 20
 
   registry:
-    image: firefox2100/dedi-registry:latest
+    image: brookeslab/cv4-registry:latest
     ports:
       - "5000:5000"
     command: ["--host", "0.0.0.0", "--port", "5000", "--log-config", "/app/conf/uvicorn-log.config.yaml",

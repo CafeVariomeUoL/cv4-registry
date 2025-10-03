@@ -1,12 +1,12 @@
 FROM python:3.11-slim
 
-LABEL org.opencontainers.image.title="Decentralised Discovery Network Registry"
-LABEL org.opencontainers.image.description="A network registry for Decentralised Discovery Gateway systems to report the networks for public finding."
-LABEL org.opencontainers.image.authors="wangyunze16@gmail.com"
-LABEL org.opencontainers.image.url="https://github.com/Firefox2100/dedi-registry"
-LABEL org.opencontainers.image.source="https://github.com/Firefox2100/dedi-registry"
-LABEL org.opencontainers.image.vendor="uk.co.firefox2100"
-LABEL org.opencontainers.image.licenses="GPL-3.0"
+LABEL org.opencontainers.image.title="Cafe Variome V4 Network Registry"
+LABEL org.opencontainers.image.description="A network registry for Cafe Variome V4 systems to report the networks for public finding."
+LABEL org.opencontainers.image.authors="brookeslab@leicester.ac.uk"
+LABEL org.opencontainers.image.url="https://github.com/CafeVariomeUoL/cv4-registry"
+LABEL org.opencontainers.image.source="https://github.com/CafeVariomeUoL/cv4-registry"
+LABEL org.opencontainers.image.vendor="org.cafevariome"
+LABEL org.opencontainers.image.licenses="MIT"
 
 ENV PYTHONUNBUFFERED=1
 ENV DR_ENV_FILE="/app/conf/.env"

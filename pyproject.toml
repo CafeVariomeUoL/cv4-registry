@@ -3,11 +3,12 @@ requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "dedi-registry"
+name = "cv4-registry"
 authors = [
   { name="Firefox2100", email="wangyunze16@gmail.com" },
+  { name="Brookes Lab", email="brookeslab@le.ac.uk" },
 ]
-description = "Decentralised Discovery Network Registry"
+description = "Cafe Variome V4 Network Registry"
 readme = "README.md"
 requires-python = ">=3.11"
 classifiers = [
@@ -18,7 +19,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
 ]
-license = "GPL-3.0-or-later"
+license = "MIT"
 license-files = ["LICENSE"]
 dependencies = [
     "apscheduler~=3.11.0",
