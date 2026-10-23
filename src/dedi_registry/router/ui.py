@@ -28,9 +28,9 @@ async def get_home_page(request: Request,
     nav_links = await build_nav_links(request, db)
 
     return TEMPLATES.TemplateResponse(
+        request,
         'home.html',
         {
-            'request': request,
             'page_title': 'Home | Decentralised Discovery Network Registry',
             'network_count': network_count,
             'node_count': node_count,
@@ -101,9 +101,9 @@ async def display_networks(request: Request,
     next_url = build_url(last_cursor_id, True) if show_next else None
 
     return TEMPLATES.TemplateResponse(
+        request,
         'networks.html',
         {
-            'request': request,
             'page_title': 'Networks | Decentralised Discovery Network Registry',
             'networks': networks,
             'network_status': network_status.value if network_status else None,
@@ -131,9 +131,9 @@ async def display_network_detail(request: Request,
         network_uuid = UUID(network_id, version=4)
     except ValueError:
         return TEMPLATES.TemplateResponse(
+            request,
             '404.html',
             {
-                'request': request,
                 'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
                 'detail': f'Invalid network ID format: {network_id}',
                 'return_url': request.url_for('display_networks'),
@@ -146,9 +146,9 @@ async def display_network_detail(request: Request,
 
     if not network:
         return TEMPLATES.TemplateResponse(
+            request,
             '404.html',
             {
-                'request': request,
                 'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
                 'detail': f'Network with ID {network_id} not found.',
                 'return_url': request.url_for('display_networks'),
@@ -213,9 +213,9 @@ async def display_network_detail(request: Request,
         })
 
     return TEMPLATES.TemplateResponse(
+        request,
         'network_detail.html',
         {
-            'request': request,
             'page_title': f'Network {network.network_name} | Decentralised Discovery Network Registry',
             'network': {
                 'network_id': str(network.network_id),

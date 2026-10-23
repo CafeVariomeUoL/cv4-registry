@@ -73,9 +73,9 @@ async def get_network_or_404(request: Request, db: Database, network_id: str):
     network = await db.networks.get(network_uuid)
     if not network:
         return TEMPLATES.TemplateResponse(
+            request,
             _404_HTML,
             {
-                'request': request,
                 'page_title': _404_TITLE,
                 'detail': f'Network with ID {network_id} not found.',
                 'return_url': request.url_for('display_networks'),
@@ -108,9 +108,9 @@ async def get_admin_login_page(request: Request,
         return RedirectResponse(redirect_url, status_code=status.HTTP_303_SEE_OTHER)
 
     return TEMPLATES.TemplateResponse(
+        request,
         'admin_login.html',
         {
-            'request': request,
             'page_title': 'Admin Login | Decentralised Discovery Network Registry',
             'login_action': request.url_for('post_admin_login'),
             'next_url': next_url or request.url_for('get_admin_dashboard'),
