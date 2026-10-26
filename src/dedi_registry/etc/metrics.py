@@ -84,12 +84,13 @@ class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
         is_websocket = request.headers.get('upgrade', '').lower() == 'websocket'
 
         if not is_websocket:
+            # Use the declared length rather than reading the body: consuming and replaying
+            # it here breaks file responses on newer Starlette and buffers uploads in memory
             try:
-                body = await request.body()
-                HTTP_REQUEST_SIZE.labels(method=method, endpoint=path).observe(len(body))
-                request._receive = self.receive_stream_once(body)
-            except Exception as e:
-                LOGGER.error('Failed to read request body: %s', e)
+                request_size = int(request.headers.get('content-length', 0))
+                HTTP_REQUEST_SIZE.labels(method=method, endpoint=path).observe(request_size)
+            except ValueError as e:
+                LOGGER.error('Invalid Content-Length header: %s', e)
 
         start_time = time.monotonic()
 
@@ -123,19 +124,3 @@ class PrometheusMetricsMiddleware(BaseHTTPMiddleware):
             LOGGER.error('Failed to increment request counter: %s', e)
 
         return response
-
-    @staticmethod
-    def receive_stream_once(body: bytes) -> Callable:
-        """
-        Replaces request._receive with a new stream that only yields the original body once.
-        """
-        sent = False
-
-        async def receive():
-            nonlocal sent
-            if not sent:
-                sent = True
-                return {'type': 'http.request', 'body': body, 'more_body': False}
-            return {'type': 'http.request', 'body': b'', 'more_body': False}
-
-        return receive

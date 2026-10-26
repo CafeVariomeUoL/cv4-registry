@@ -62,8 +62,10 @@ async def change_network_status(db: Database,
 
 def require_admin_session(request: Request):
     if not request.session.get('username', None):
+        login_url = request.url_for('get_admin_login_page')
+
         return RedirectResponse(
-            request.url_for('get_admin_login_page', next=request.url.path),
+            f'{login_url}?{urlencode({"next": request.url.path})}',
             status_code=status.HTTP_303_SEE_OTHER
         )
     return None
@@ -190,13 +192,41 @@ async def admin_logout(request: Request):
     return RedirectResponse(request.url_for('get_admin_login_page'), status_code=status.HTTP_303_SEE_OTHER)
 
 
-@admin_router.get('')
-async def get_admin_dashboard():
+@admin_router.get('', response_class=HTMLResponse)
+async def get_admin_dashboard(request: Request,
+                              db: Database = Depends(get_active_db),
+                              ):
     """
-    Serve the admin dashboard page.
+    Serve the admin dashboard: registrations waiting for review and a count per status.
     \f
-    :return: An HTML response with the admin dashboard content.
+    :param request: The incoming HTTP request.
+    :param db: The database instance to read networks from.
+    :return: An HTML response with the moderation queue.
     """
+    session_redirect = require_admin_session(request)
+    if session_redirect:
+        return session_redirect
+
+    pending, _, _ = await db.networks.filter(status=RecordStatus.PENDING)
+
+    status_counts = []
+    for record_status in RecordStatus:
+        status_counts.append({
+            'status': record_status.value,
+            'count': await db.networks.count(record_status),
+            'url': f'/networks?status={record_status.value}',
+        })
+
+    return TEMPLATES.TemplateResponse(
+        request,
+        'admin_dashboard.html',
+        {
+            'page_title': 'Moderation | Decentralised Discovery Network Registry',
+            'pending': pending,
+            'status_counts': status_counts,
+            'nav_links': await build_nav_links(request, db),
+        }
+    )
 
 
 @admin_router.post('/networks/{network_id}/approve')
@@ -204,6 +234,7 @@ async def approve_network_registration(request: Request,
                                        network_id: str,
                                        db: Database = Depends(get_active_db),
                                        request_detail: NetworkAuditRequestDetail = Depends(get_request_detail),
+                                       next_url: str | None = Form(None, alias='next'),
                                        ):
     """
     Approve a network registration request.
@@ -212,11 +243,17 @@ async def approve_network_registration(request: Request,
     :param network_id: The ID of the network to approve.
     :param db: The database instance to perform the operation.
     :param request_detail: Details about the request for auditing purposes.
-    :return: A redirection response to the network detail page.
+    :param next_url: Optional page to return to afterwards, defaults to the network detail page.
+    :return: A redirection response, to the network detail page unless told otherwise.
     """
     session_redirect = require_admin_session(request)
     if session_redirect:
         return session_redirect
+
+    destination = sanitise_next_url(
+        next_url,
+        default=str(request.url_for('display_network_detail', network_id=network_id)),
+    )
 
     network = await get_network_or_404(request, db, network_id)
     if isinstance(network, HTMLResponse):
@@ -224,14 +261,14 @@ async def approve_network_registration(request: Request,
 
     if network.status == RecordStatus.ACTIVE:
         return RedirectResponse(
-            request.url_for('display_network_detail', network_id=network_id),
+            destination,
             status_code=status.HTTP_303_SEE_OTHER
         )
 
     await change_network_status(db, UUID(network_id), request_detail, RecordStatus.ACTIVE)
 
     return RedirectResponse(
-        request.url_for('display_network_detail', network_id=network_id),
+        destination,
         status_code=status.HTTP_303_SEE_OTHER
     )
 
@@ -241,6 +278,7 @@ async def reject_network_registration(request: Request,
                                       network_id: str,
                                       db: Database = Depends(get_active_db),
                                       request_detail: NetworkAuditRequestDetail = Depends(get_request_detail),
+                                      next_url: str | None = Form(None, alias='next'),
                                       ):
         """
         Reject a network registration request.
@@ -249,11 +287,17 @@ async def reject_network_registration(request: Request,
         :param network_id: The ID of the network to reject.
         :param db: The database instance to perform the operation.
         :param request_detail: Details about the request for auditing purposes.
-        :return: A redirection response to the network detail page.
+        :param next_url: Optional page to return to afterwards, defaults to the network detail page.
+        :return: A redirection response, to the network detail page unless told otherwise.
         """
         session_redirect = require_admin_session(request)
         if session_redirect:
             return session_redirect
+
+        destination = sanitise_next_url(
+            next_url,
+            default=str(request.url_for('display_network_detail', network_id=network_id)),
+        )
 
         network = await get_network_or_404(request, db, network_id)
         if isinstance(network, HTMLResponse):
@@ -261,14 +305,14 @@ async def reject_network_registration(request: Request,
 
         if network.status == RecordStatus.REJECTED:
             return RedirectResponse(
-                request.url_for('display_network_detail', network_id=network_id),
+                destination,
                 status_code=status.HTTP_303_SEE_OTHER
             )
 
         await change_network_status(db, UUID(network_id), request_detail, RecordStatus.REJECTED)
 
         return RedirectResponse(
-            request.url_for('display_network_detail', network_id=network_id),
+            destination,
             status_code=status.HTTP_303_SEE_OTHER
         )
 

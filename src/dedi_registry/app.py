@@ -122,7 +122,7 @@ def create_app() -> FastAPI:
             return response
 
         # Build a strict policy (adjust as you add features)
-        policy = "; ".join([
+        directives = [
             "default-src 'self'",
             "base-uri 'self'",
             "object-src 'none'",
@@ -132,8 +132,13 @@ def create_app() -> FastAPI:
             "font-src 'self'",
             "style-src 'self'",
             f"script-src 'self' 'nonce-{nonce}'",
-            "upgrade-insecure-requests",
-        ])
+        ]
+
+        if CONFIG.use_https:
+            # Upgrading on a plain HTTP deployment would break every sub-resource
+            directives.append("upgrade-insecure-requests")
+
+        policy = "; ".join(directives)
 
         response.headers['Content-Security-Policy'] = policy
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
