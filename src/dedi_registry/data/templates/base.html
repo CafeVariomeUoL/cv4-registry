@@ -3,11 +3,11 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>{{ page_title or "Decentralised Discovery Network Registry" }}</title>
-  <meta name="description" content="{{ meta_description or 'Find networks that run the Decentralised Discovery Gateway protocol, and see how to join them.' }}" />
+  <title>{{ page_title or "Cafe Variome V4 Network Registry" }}</title>
+  <meta name="description" content="{{ meta_description or 'Find the networks listed by Cafe Variome V4 systems, and see how to join them.' }}" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="light dark" />
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230b5cad' stroke-width='1.75' stroke-linecap='round'%3E%3Cpath d='M12 5.5 5.5 17.5M12 5.5l6.5 12M5.5 17.5h13'/%3E%3Ccircle cx='12' cy='5.5' r='2.25' fill='%23fff'/%3E%3Ccircle cx='5.5' cy='17.5' r='2.25' fill='%23fff'/%3E%3Ccircle cx='18.5' cy='17.5' r='2.25' fill='%23fff'/%3E%3C/svg%3E" />
+  <meta name="color-scheme" content="light" />
+  <link rel="icon" type="image/png" href="{{ url_for('static', path='img/logo-64.png') }}" />
   <link href="{{ url_for('static', path='vendor/bootstrap/5.3.8/css/bootstrap.min.css') }}" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', path='css/custom.css') }}" />
 </head>
@@ -17,14 +17,9 @@
   <header class="site-header">
     <div class="site-header__inner">
       <a class="brand" href="/">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true">
-          <path d="M12 5.5 5.5 17.5M12 5.5l6.5 12M5.5 17.5h13"/>
-          <circle cx="12" cy="5.5" r="2.25" fill="var(--surface)"/>
-          <circle cx="5.5" cy="17.5" r="2.25" fill="var(--surface)"/>
-          <circle cx="18.5" cy="17.5" r="2.25" fill="var(--surface)"/>
-        </svg>
-        <span class="brand__name">Decentralised Discovery Network Registry</span>
-        <span class="brand__short">DDN Registry</span>
+        <img class="brand__logo" src="{{ url_for('static', path='img/logo.png') }}" alt="" width="40" height="40">
+        <span class="brand__name">Café Variome</span>
+        <span class="brand__sub">Network Registry</span>
       </a>
 
       <nav class="site-nav" aria-label="Main">
@@ -49,11 +44,11 @@
 
   <footer class="site-footer">
     <div class="site-footer__inner">
-      <span>Decentralised Discovery Network Registry {{ app_version }}</span>
+      <span>Café Variome V4 Network Registry {{ app_version }}</span>
       <ul>
         <li><a href="/docs">API documentation</a></li>
-        <li><a href="https://github.com/Firefox2100/dedi-gateway" rel="noopener">Gateway</a></li>
-        <li><a href="https://github.com/Firefox2100/dedi-registry" rel="noopener">Source</a></li>
+        <li><a href="https://www.cafevariome.org" rel="noopener">Café Variome</a></li>
+        <li><a href="https://github.com/CafeVariomeUoL/cv4-registry" rel="noopener">Source</a></li>
       </ul>
     </div>
   </footer>

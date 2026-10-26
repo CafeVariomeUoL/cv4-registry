@@ -26,7 +26,7 @@ async def get_home_page(request: Request,
                         db: Database = Depends(get_active_db),
                         ):
     """
-    Serve the home page of the Decentralised Discovery Network Registry.
+    Serve the home page of the Cafe Variome V4 Network Registry.
     \f
     :param request: Request object.
     :param db: Database instance.
@@ -44,7 +44,7 @@ async def get_home_page(request: Request,
         request,
         'home.html',
         {
-            'page_title': 'Home | Decentralised Discovery Network Registry',
+            'page_title': 'Home | Cafe Variome V4 Network Registry',
             'network_count': network_count,
             'node_count': node_count,
             'networks': networks,
@@ -149,7 +149,7 @@ async def display_networks(request: Request,
         request,
         'networks.html',
         {
-            'page_title': 'Networks | Decentralised Discovery Network Registry',
+            'page_title': 'Networks | Cafe Variome V4 Network Registry',
             'networks': networks,
             'network_status': current_status,
             'query': search,
@@ -182,7 +182,7 @@ async def display_network_detail(request: Request,
             request,
             '404.html',
             {
-                'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                'page_title': 'Network Not Found | Cafe Variome V4 Network Registry',
                 'detail': f'Invalid network ID format: {network_id}',
                 'return_url': request.url_for('display_networks'),
                 'return_label': 'Back to Networks',
@@ -200,7 +200,7 @@ async def display_network_detail(request: Request,
             request,
             '404.html',
             {
-                'page_title': 'Network Not Found | Decentralised Discovery Network Registry',
+                'page_title': 'Network Not Found | Cafe Variome V4 Network Registry',
                 'detail': f'Network with ID {network_id} not found.',
                 'return_url': request.url_for('display_networks'),
                 'return_label': 'Back to Networks',
@@ -271,7 +271,7 @@ async def display_network_detail(request: Request,
         request,
         'network_detail.html',
         {
-            'page_title': f'Network {network.network_name} | Decentralised Discovery Network Registry',
+            'page_title': f'Network {network.network_name} | Cafe Variome V4 Network Registry',
             'network': {
                 'network_id': str(network.network_id),
                 'network_name': network.network_name,

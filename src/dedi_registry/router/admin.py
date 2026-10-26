@@ -17,7 +17,7 @@ admin_router = APIRouter(
 )
 
 _404_HTML = '404.html'
-_404_TITLE = 'Network Not Found | Decentralised Discovery Network Registry'
+_404_TITLE = 'Network Not Found | Cafe Variome V4 Network Registry'
 _404_RETURN_LABEL = 'Back to Networks'
 
 
@@ -113,7 +113,7 @@ async def get_admin_login_page(request: Request,
         request,
         'admin_login.html',
         {
-            'page_title': 'Admin Login | Decentralised Discovery Network Registry',
+            'page_title': 'Admin Login | Cafe Variome V4 Network Registry',
             'login_action': request.url_for('post_admin_login'),
             'next_url': next_url or request.url_for('get_admin_dashboard'),
             'error': request.query_params.get('error', None),
@@ -221,7 +221,7 @@ async def get_admin_dashboard(request: Request,
         request,
         'admin_dashboard.html',
         {
-            'page_title': 'Moderation | Decentralised Discovery Network Registry',
+            'page_title': 'Moderation | Cafe Variome V4 Network Registry',
             'pending': pending,
             'status_counts': status_counts,
             'nav_links': await build_nav_links(request, db),

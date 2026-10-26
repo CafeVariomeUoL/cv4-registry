@@ -11,7 +11,7 @@ from dedi_registry.etc.enums import DatabaseDriverType, CacheDriverType
 
 class Settings(BaseSettings):
     """
-    Configurations for the Decentralised Discovery Network Registry backend.
+    Configurations for the Cafe Variome V4 Network Registry backend.
     """
     model_config = SettingsConfigDict(
         env_prefix='DR_',
@@ -84,7 +84,7 @@ class Settings(BaseSettings):
 
 
 CONFIG = Settings(_env_file=os.getenv('DR_ENV_FILE', 'conf/.env'))      # type: ignore
-LOGGER = logging.getLogger('Decentralised Discovery Network Registry')
+LOGGER = logging.getLogger('Cafe Variome V4 Network Registry')
 LOGGER.setLevel(CONFIG.logging_level.upper())   # pylint: disable=no-member
 
 if not LOGGER.hasHandlers():

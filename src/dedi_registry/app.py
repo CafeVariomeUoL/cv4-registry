@@ -29,7 +29,7 @@ async def lifespan(_: FastAPI):
     db = get_active_db()
 
     try:
-        LOGGER.info('Starting Decentralised Discovery Network Registry application...')
+        LOGGER.info('Starting Cafe Variome V4 Network Registry application...')
 
         await db.init()
         LOGGER.info('Database connection established.')
@@ -40,7 +40,7 @@ async def lifespan(_: FastAPI):
         LOGGER.exception('Error during application startup: %s', e)
         raise
     finally:
-        LOGGER.info('Stopping Decentralised Discovery Network Registry application...')
+        LOGGER.info('Stopping Cafe Variome V4 Network Registry application...')
         await db.close()
 
         LOGGER.info('Application shutdown complete.')
@@ -54,7 +54,7 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title='Cafe Variome V4 Network Registry',
         version=dedi_registry_version,
-        description='A network registry for Decentralised Cafe Variome V4 systems to '
+        description='A network registry for Cafe Variome V4 systems to '
                     'report the networks for public finding.',
         contact={
             'name': 'Brookes Lab',
@@ -72,7 +72,7 @@ def create_app() -> FastAPI:
             },
             {
                 'name': 'API',
-                'description': 'Endpoints for other DDG services to interact with the registry.',
+                'description': 'Endpoints for other Cafe Variome V4 services to interact with the registry.',
             },
             {
                 'name': 'UI',
@@ -195,7 +195,7 @@ def create_app() -> FastAPI:
         db = get_active_db()
         nav_links = await build_nav_links(request, db)
         context = {
-            'page_title': f'{exc.status_code} Error | Decentralised Discovery Network Registry',
+            'page_title': f'{exc.status_code} Error | Cafe Variome V4 Network Registry',
             'detail': getattr(exc, 'detail', None),
             'nav_links': nav_links,
             'return_url': '/',

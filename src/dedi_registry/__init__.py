@@ -1,7 +1,7 @@
 """
-Decentralised Discovery Network Registry
+Cafe Variome V4 Network Registry
 
-A service for Decentralised Discovery Gateway services to register their networks
+A service for Cafe Variome V4 systems to register their networks
 for public discovery.
 """
 

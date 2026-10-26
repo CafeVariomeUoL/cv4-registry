@@ -7,7 +7,7 @@ from .base import JsonModel
 
 class Node(JsonModel):
     """
-    A node in a network, representing a DDG service instance.
+    A node in a network, representing a Cafe Variome V4 instance.
     """
 
     model_config = ConfigDict(

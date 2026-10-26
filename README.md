@@ -31,8 +31,8 @@ The software is written in Python and uses the FastAPI framework with Jinja2 for
 Ensure you have Python environment setup. We recommend using either a separate conda environment or `venv` or `virtualenv` to create a virtual environment. This way the installation is cleaner and easier to manage.
 
 ```bash
-git clone https://github.com/Firefox2100/dedi-registry.git
-cd dedi-registry
+git clone https://github.com/CafeVariomeUoL/cv4-registry.git
+cd cv4-registry
 python -m venv .venv
 source .venv/bin/activate  # On Windows use `.venv\Scripts\activate`
 pip install . # or `pip install -e .` for editable install
@@ -62,7 +62,7 @@ Note that this is for convenient startup in self-contained environments. None of
 
 ### Running with Docker
 
-The software can also be run using Docker. A `Dockerfile` is provided for building the image. A copy of the image is also published on [Docker Hub](https://hub.docker.com/r/firefox2100/dedi-registry). Refer to the documents there for tags and versions.
+The software can also be run using Docker. A `Dockerfile` is provided for building the image. The image is published as `brookeslab/cv4-registry`; refer to its Docker Hub page for tags and versions.
 
 To build the Docker image locally (assuming already in the project directory):
 
@@ -100,5 +100,7 @@ The software itself is licensed under MIT. See the [LICENSE](LICENSE) file for d
 The software uses several third-party libraries, but does not re-distribute most of them. The ones that are bundled and re-distributed are:
 
 - Bootstrap 5.3.8 (MIT License)
+- Inter and Space Grotesk, Latin subsets (SIL Open Font License 1.1; the licence texts are in `src/dedi_registry/data/static/fonts/`)
+- The Café Variome logo, taken from the Café Variome V4 frontend
 
 Their licences are included with their respective files or source directories.

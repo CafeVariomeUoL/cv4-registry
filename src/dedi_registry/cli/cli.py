@@ -5,7 +5,7 @@ import dedi_registry.cli.user as user
 
 
 def create_cli() -> typer.Typer:
-    app = typer.Typer(help='Decentralised Discovery Network Registry CLI')
+    app = typer.Typer(help='Cafe Variome V4 Network Registry CLI')
 
     app.add_typer(user.app, name='user', help='Administrator user operations')
 

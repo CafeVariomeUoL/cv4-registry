@@ -5,7 +5,7 @@
   <section class="intro">
     <h1>Find a network to join</h1>
     <p class="lede">
-      Networks that run the Decentralised Discovery Gateway protocol list themselves here.
+      Networks created by Café Variome nodes list themselves here.
       Open one to see its nodes and public keys.
       {{ network_count }} {{ 'network' if network_count == 1 else 'networks' }} and
       {{ node_count }} {{ 'node' if node_count == 1 else 'nodes' }} are listed.
@@ -24,7 +24,7 @@
     {% else %}
       <div class="empty">
         <h2>No networks are listed yet</h2>
-        <p>Networks appear here once a gateway has registered one and an administrator has approved it.</p>
+        <p>Networks appear here once a Café Variome node has registered one and an administrator has approved it.</p>
       </div>
     {% endif %}
   </section>
@@ -33,23 +33,24 @@
     <div>
       <h2>About the registry</h2>
       <p>
-        The Decentralised Discovery Gateway is a service offering plug-and-play message and data
-        federation across different nodes. Each node controls user authorisation autonomously, and
-        networks can outlive the project or portal that created them.
+        Café Variome V4 enables secure, federated discovery of genomic and health data. Each
+        institution runs its own node and keeps custody of its data; queries travel out to
+        participating sources and come back only at the level the data owner has approved.
       </p>
       <p>
-        Those networks are local and not controlled by any central authority, so they are often hard
-        to find: you need to know which node to ask and which network you want. This registry lets
-        services running a compatible protocol implementation list their networks and nodes, so
-        people outside the project can find and join them.
+        Nodes join networks to form focused discovery networks. Those networks are local and not
+        controlled by any central authority, so they are often hard to find: you need to know which
+        node to ask and which network you want. This registry lets Café Variome nodes list their
+        networks, so people outside a project can find and join them.
       </p>
     </div>
     <div>
       <h2>List your network</h2>
       <p>
-        Gateways register a network through the API. A registration carries a proof-of-work
-        solution, and later changes are signed with the network's management key. New registrations
-        may wait for an administrator's approval before they appear in the list.
+        A Café Variome node registers a network through the API when its owner chooses to list it.
+        A registration carries a proof-of-work solution, and later changes are signed with the
+        network's management key. New registrations may wait for an administrator's approval
+        before they appear in the list.
       </p>
       <p><a href="/docs">Read the API documentation</a></p>
     </div>
