@@ -122,7 +122,7 @@ def create_app() -> FastAPI:
             return response
 
         # Build a strict policy (adjust as you add features)
-        policy = "; ".join([
+        directives = [
             "default-src 'self'",
             "base-uri 'self'",
             "object-src 'none'",
@@ -132,8 +132,13 @@ def create_app() -> FastAPI:
             "font-src 'self'",
             "style-src 'self'",
             f"script-src 'self' 'nonce-{nonce}'",
-            "upgrade-insecure-requests",
-        ])
+        ]
+
+        if CONFIG.use_https:
+            # Upgrading on a plain HTTP deployment would break every sub-resource
+            directives.append("upgrade-insecure-requests")
+
+        policy = "; ".join(directives)
 
         response.headers['Content-Security-Policy'] = policy
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
@@ -190,7 +195,6 @@ def create_app() -> FastAPI:
         db = get_active_db()
         nav_links = await build_nav_links(request, db)
         context = {
-            'request': request,
             'page_title': f'{exc.status_code} Error | Decentralised Discovery Network Registry',
             'detail': getattr(exc, 'detail', None),
             'nav_links': nav_links,
@@ -200,12 +204,14 @@ def create_app() -> FastAPI:
 
         if exc.status_code == 404:
             return TEMPLATES.TemplateResponse(
+                request,
                 '404.html',
                 context=context,
                 status_code=404
             )
 
         return TEMPLATES.TemplateResponse(
+            request,
             '500.html',
             context=context,
             status_code=exc.status_code

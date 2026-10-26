@@ -132,6 +132,15 @@ async def test_networks_page_accessible(base_url, client):
     assert 'text/html' in response.headers['Content-Type']
 
 
+async def test_static_files_have_content(client):
+    for path in ('/static/css/custom.css', '/static/js/app.js'):
+        response = await client.get(path)
+
+        assert response.status_code == 200
+        assert len(response.content) > 0
+        assert len(response.content) == int(response.headers['Content-Length'])
+
+
 async def test_get_challenge(client):
     response = await client.get('/api/v1/challenge')
 
@@ -273,7 +282,7 @@ async def test_update_network(client):
     serialised_str = json.dumps(updated_data, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
     signature = NETWORK_PRIVATE_KEY.sign(
         data=serialised_str.encode(),
-        signature_algorithm=ec.ECDSA(hashes.SHA256()),
+        signature_algorithm=ec.ECDSA(hashes.SHA384()),
     ).hex()
 
     response = await client.put(
@@ -295,6 +304,15 @@ async def test_update_network(client):
     assert update_result['nodes'][0]['nodeId'] == NODE_ID_1
     assert update_result['nodes'][0]['description'] == 'This node is now updated.'
 
+    # The update must actually be persisted, not just echoed back
+    stored_response = await client.get(f'/api/v1/networks/{NETWORK_ID}')
+    assert stored_response.status_code == 200
+    stored = stored_response.json()
+    assert stored['networkName'] == updated_data['networkName']
+    assert stored['description'] == updated_data['description']
+    assert stored['status'] == 'pending'
+    assert stored['nodes'][0]['description'] == 'This node is now updated.'
+
     audit_response = await client.get(f'/api/v1/networks/{NETWORK_ID}/audits')
     assert audit_response.status_code == 200
     audits = audit_response.json()
@@ -311,6 +329,20 @@ async def test_update_network(client):
     request_details = update_audit['requestDetail']
     assert request_details['userAgent'] == 'DediRegistrySmokeTest/1.0'
     assert audits[0]['hashAfter'] == update_audit['hashBefore']
+
+
+async def test_pending_network_hidden_from_visitors(client):
+    listing = await client.get('/networks')
+    assert listing.status_code == 200
+    assert NETWORK_ID not in listing.text
+
+    detail = await client.get(f'/networks/{NETWORK_ID}')
+    assert detail.status_code == 404
+
+    # Asking for a status does not widen what a visitor can see
+    filtered = await client.get('/networks', params={'status': 'pending'})
+    assert filtered.status_code == 200
+    assert NETWORK_ID not in filtered.text
 
 
 async def test_admin_login(client, admin_credentials):
@@ -356,6 +388,20 @@ async def test_admin_login(client, admin_credentials):
     assert any(re.match(r'Logout \(.*\)', t) for t in texts)
 
 
+async def test_admin_dashboard_lists_pending(client):
+    response = await client.get('/admin')
+
+    assert response.status_code == 200
+    soup = BeautifulSoup(response.text, 'html.parser')
+    assert NETWORK_ID in response.text
+    assert soup.select_one(f'form[action$="/admin/networks/{NETWORK_ID}/approve"]') is not None
+
+    # Administrators can see and filter by every status
+    pending = await client.get('/networks', params={'status': 'pending'})
+    assert pending.status_code == 200
+    assert NETWORK_ID in pending.text
+
+
 async def test_admin_approve_network(client):
     # The client should already be logged in from the previous test
     network_details_response = await client.get(f'/networks/{NETWORK_ID}')
@@ -386,6 +432,35 @@ async def test_logout(client, base_url):
 
     assert logout_response.status_code == 303
     assert logout_response.headers['Location'] == f'{base_url}/admin/login'
+
+
+async def test_active_network_visible_to_visitors(client):
+    # The client has logged out by now, so these requests are anonymous
+    dashboard = await client.get('/admin')
+    assert dashboard.status_code == 303
+    assert dashboard.headers['Location'].startswith(f'{client.base_url}/admin/login')
+
+    listing = await client.get('/networks')
+    assert listing.status_code == 200
+    assert NETWORK_ID in listing.text
+
+    # Search matches part of the name, ignoring case
+    found = await client.get('/networks', params={'q': 'UPDATED TEST'})
+    assert found.status_code == 200
+    assert NETWORK_ID in found.text
+
+    missing = await client.get('/networks', params={'q': 'no such network'})
+    assert missing.status_code == 200
+    assert NETWORK_ID not in missing.text
+
+    # Search text is literal, never a pattern
+    pattern = await client.get('/networks', params={'q': '.*'})
+    assert pattern.status_code == 200
+    assert NETWORK_ID not in pattern.text
+
+    detail = await client.get(f'/networks/{NETWORK_ID}')
+    assert detail.status_code == 200
+    assert 'Audit trail' in detail.text
 
 
 async def test_create_user_with_cli(admin_credentials):
