@@ -112,7 +112,7 @@ class MongoNetworkRepository(NetworkRepository):
             node.public_key = reformat_pem(node.public_key)
 
         await self.collection.update_one(
-            {'networkId': network.network_id},
+            {'networkId': str(network.network_id)},
             {'$set': network.model_dump()},
             upsert=True
         )
@@ -132,7 +132,7 @@ class MongoNetworkRepository(NetworkRepository):
         :return: None
         """
         await self.collection.update_one(
-            {'networkId': network.network_id},
+            {'networkId': str(network.network_id)},
             {'$set': network.model_dump()}
         )
 

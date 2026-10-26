@@ -273,7 +273,7 @@ async def test_update_network(client):
     serialised_str = json.dumps(updated_data, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
     signature = NETWORK_PRIVATE_KEY.sign(
         data=serialised_str.encode(),
-        signature_algorithm=ec.ECDSA(hashes.SHA256()),
+        signature_algorithm=ec.ECDSA(hashes.SHA384()),
     ).hex()
 
     response = await client.put(
@@ -294,6 +294,15 @@ async def test_update_network(client):
     assert len(update_result['nodes']) == 1
     assert update_result['nodes'][0]['nodeId'] == NODE_ID_1
     assert update_result['nodes'][0]['description'] == 'This node is now updated.'
+
+    # The update must actually be persisted, not just echoed back
+    stored_response = await client.get(f'/api/v1/networks/{NETWORK_ID}')
+    assert stored_response.status_code == 200
+    stored = stored_response.json()
+    assert stored['networkName'] == updated_data['networkName']
+    assert stored['description'] == updated_data['description']
+    assert stored['status'] == 'pending'
+    assert stored['nodes'][0]['description'] == 'This node is now updated.'
 
     audit_response = await client.get(f'/api/v1/networks/{NETWORK_ID}/audits')
     assert audit_response.status_code == 200
